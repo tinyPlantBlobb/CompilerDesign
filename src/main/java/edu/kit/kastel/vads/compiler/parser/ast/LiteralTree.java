@@ -43,4 +43,12 @@ public record LiteralTree(String value, int base, Span span) implements Expressi
     }
   }
 
+  private OptionalLong parseHex(int end) {
+    try {
+      return OptionalLong.of(Integer.parseUnsignedInt(value, 2, end, 16));
+    } catch (NumberFormatException e) {
+      return OptionalLong.empty();
+    }
+  }
+
 }
