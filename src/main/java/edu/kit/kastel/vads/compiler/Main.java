@@ -20,42 +20,44 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Main {
-    public static void main(String[] args) throws IOException {
-        if (args.length != 2) {
-            System.err.println("Invalid arguments: Expected one input file and one output file");
-            System.exit(3);
-        }
-        Path input = Path.of(args[0]);
-        Path output = Path.of(args[1]);
-        ProgramTree program = lexAndParse(input);
-        try {
-            new SemanticAnalysis(program).analyze();
-        } catch (SemanticException e) {
-            e.printStackTrace();
-            System.exit(7);
-            return;
-        }
-        List<IrGraph> graphs = new ArrayList<>();
-        for (FunctionTree function : program.topLevelTrees()) {
-            SsaTranslation translation = new SsaTranslation(function, new LocalValueNumbering());
-            graphs.add(translation.translate());
-        }
+  public static void main(String[] args) throws IOException {
+    if (args.length != 2) {
+      System.err.println("Invalid arguments: Expected one input file and one output file");
+      System.exit(3);
+    }
+    Path input = Path.of(args[0]);
+    Path output = Path.of(args[1]);
+    ProgramTree program = lexAndParse(input);
+    try {
+      new SemanticAnalysis(program).analyze();
+    } catch (SemanticException e) {
+      e.printStackTrace();
+      System.exit(7);
 
-        // TODO: generate assembly and invoke gcc instead of generating abstract assembly
-        String s = new CodeGenerator().generateCode(graphs);
-        Files.writeString(output, s);
+      return;
+    }
+    List<IrGraph> graphs = new ArrayList<>();
+    for (FunctionTree function : program.topLevelTrees()) {
+      SsaTranslation translation = new SsaTranslation(function, new LocalValueNumbering());
+      graphs.add(translation.translate());
     }
 
-    private static ProgramTree lexAndParse(Path input) throws IOException {
-        try {
-            Lexer lexer = Lexer.forString(Files.readString(input));
-            TokenSource tokenSource = new TokenSource(lexer);
-            Parser parser = new Parser(tokenSource);
-            return parser.parseProgram();
-        } catch (ParseException e) {
-            e.printStackTrace();
-            System.exit(42);
-            throw new AssertionError("unreachable");
-        }
+    // TODO: generate assembly and invoke gcc instead of generating abstract
+    // assembly
+    String s = new CodeGenerator().generateCode(graphs);
+    Files.writeString(output, s);
+  }
+
+  private static ProgramTree lexAndParse(Path input) throws IOException {
+    try {
+      Lexer lexer = Lexer.forString(Files.readString(input));
+      TokenSource tokenSource = new TokenSource(lexer);
+      Parser parser = new Parser(tokenSource);
+      return parser.parseProgram();
+    } catch (ParseException e) {
+      e.printStackTrace();
+      System.exit(42);
+      throw new AssertionError("unreachable");
     }
+  }
 }
