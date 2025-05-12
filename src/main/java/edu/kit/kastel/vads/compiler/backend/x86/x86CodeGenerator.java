@@ -26,31 +26,34 @@ public class x86CodeGenerator {
 
     public String generateCode(List<IrGraph> program) {
         StringBuilder builder = new StringBuilder();
-        builder.append(generatePrologue());
+
         for (IrGraph graph : program) {
             x86RegisterAllocator allocator = new x86RegisterAllocator();
             Map<Node, Register> registers = allocator.allocateRegisters(graph);
-            builder.append("function ")
-                    .append(graph.name())
-                    .append(" \n");
-            generateForGraph(graph, builder, registers);
-            builder.append("}");
+            if (graph.name().equals("main")) {
+                builder.append(generatePrologue());
+            }else{
+                builder.append(graph.name())
+                        .append(": \n");
+                generateForGraph(graph, builder, registers);
+            }
+
+
         }
         return builder.toString();
     }
     public String generatePrologue(){
-        StringBuilder builder = new StringBuilder();
-        builder.append(".intel_syntax noprefix").append(System.lineSeparator())
-                .append(".global main").append(System.lineSeparator())
-                .append(".text").append(System.lineSeparator()).append(System.lineSeparator())
-                .append("main:").append(System.lineSeparator())
-                .append("call _main").append(System.lineSeparator()).append(System.lineSeparator());
-        builder.append("movq ").append(x86Registers.RDI.toString()).append(", ").append(x86Registers.RAX
-        ).append(System.lineSeparator()).append("movq ").append(x86Registers.RAX
-        ).append(System.lineSeparator()).append(" , 0x3c").append(System.lineSeparator())
-                .append("syscall").append(System.lineSeparator());
-        builder.append(System.lineSeparator()). append("_main:").append(System.lineSeparator());
-        return builder.toString();
+        return ".intel_syntax noprefix" + System.lineSeparator() +
+                ".global main" + System.lineSeparator() +
+                ".global _main" + System.lineSeparator() +
+                ".text" + System.lineSeparator() + System.lineSeparator() +
+                "main:" + System.lineSeparator() +
+                "call _main" + System.lineSeparator() +
+                System.lineSeparator() +
+                "movq " + x86Registers.RDI.toString() + ", " + x86Registers.RAX + System.lineSeparator() +
+                "movq " + x86Registers.RAX + " , 0x3c" + System.lineSeparator() +
+                "syscall" + System.lineSeparator() + System.lineSeparator() +
+                "_main:" + System.lineSeparator();
     }
 
 
@@ -72,8 +75,9 @@ public class x86CodeGenerator {
             case MulNode mul -> binary(builder, registers, mul, "mul");
             case DivNode div -> binary(builder, registers, div, "div");
             case ModNode mod -> binary(builder, registers, mod, "mod");
-            case ReturnNode r -> builder.repeat(" ", 2).append("ret ")
-                    .append(registers.get(predecessorSkipProj(r, ReturnNode.RESULT)));
+            case ReturnNode r -> builder.repeat(" ", 2).append("movq ").append(x86Registers.RAX.toString()).append(", ")
+                    .append(registers.get(predecessorSkipProj(r, ReturnNode.RESULT))).append(System.lineSeparator())
+                    .append("ret");
             case ConstIntNode c -> builder.repeat(" ", 2)
                     .append(registers.get(c))
                     .append(" = const ")
@@ -93,12 +97,10 @@ public class x86CodeGenerator {
             BinaryOperationNode node,
             String opcode
     ) {
-        builder.repeat(" ", 2).append(registers.get(node))
-                .append(" = ")
-                .append(opcode)
+        builder.repeat(" ", 2).append(opcode)
                 .append(" ")
                 .append(registers.get(predecessorSkipProj(node, BinaryOperationNode.LEFT)))
-                .append(" ")
+                .append(", ")
                 .append(registers.get(predecessorSkipProj(node, BinaryOperationNode.RIGHT)));
     }
 }
