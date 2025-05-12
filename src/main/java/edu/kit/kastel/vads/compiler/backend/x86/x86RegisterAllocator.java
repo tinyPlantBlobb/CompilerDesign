@@ -1,4 +1,4 @@
-package edu.kit.kastel.vads.compiler.backend.x84;
+package edu.kit.kastel.vads.compiler.backend.x86;
 
 import edu.kit.kastel.vads.compiler.backend.regalloc.Register;
 import edu.kit.kastel.vads.compiler.backend.regalloc.RegisterAllocator;
@@ -14,7 +14,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-public class x84RegisterAllocator implements RegisterAllocator {
+public class x86RegisterAllocator implements RegisterAllocator {
     private int id;
     private final Map<Node, Register> registers = new HashMap<>();
 
@@ -38,6 +38,7 @@ public class x84RegisterAllocator implements RegisterAllocator {
     }
 
     private static boolean needsRegister(Node node) {
+        // TODO: add liveness analysis/needed analysis
         return !(node instanceof ProjNode || node instanceof StartNode || node instanceof Block || node instanceof ReturnNode);
     }
 }

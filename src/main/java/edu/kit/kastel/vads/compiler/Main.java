@@ -1,6 +1,6 @@
 package edu.kit.kastel.vads.compiler;
 
-import edu.kit.kastel.vads.compiler.backend.aasm.CodeGenerator;
+import edu.kit.kastel.vads.compiler.backend.x86.x86CodeGenerator;
 import edu.kit.kastel.vads.compiler.ir.IrGraph;
 import edu.kit.kastel.vads.compiler.ir.SsaTranslation;
 import edu.kit.kastel.vads.compiler.ir.optimize.LocalValueNumbering;
@@ -50,13 +50,13 @@ public class Main {
 
       // TODO: generate assembly and invoke gcc instead of generating abstract
       // assembly
-      String s = new CodeGenerator().generateCode(graphs);
+      String s = new x86CodeGenerator().generateCode(graphs);
       Files.writeString(output, s);
     }
 
     // TODO: generate assembly and invoke gcc instead of generating abstract
     // assembly
-    String s = new CodeGenerator().generateCode(graphs);
+    String s = new x86CodeGenerator().generateCode(graphs);
     Files.writeString(output, s);
   }
 

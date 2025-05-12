@@ -1,5 +1,4 @@
-package edu.kit.kastel.vads.compiler.backend.x84;
-import edu.kit.kastel.vads.compiler.backend.aasm.AasmRegisterAllocator;
+package edu.kit.kastel.vads.compiler.backend.x86;
 import edu.kit.kastel.vads.compiler.backend.regalloc.Register;
 import edu.kit.kastel.vads.compiler.ir.IrGraph;
 import edu.kit.kastel.vads.compiler.ir.node.AddNode;
@@ -23,21 +22,37 @@ import java.util.Set;
 
 import static edu.kit.kastel.vads.compiler.ir.util.NodeSupport.predecessorSkipProj;
 
-public class x84CodeGenerator {
+public class x86CodeGenerator {
 
     public String generateCode(List<IrGraph> program) {
         StringBuilder builder = new StringBuilder();
+        builder.append(generatePrologue());
         for (IrGraph graph : program) {
-            AasmRegisterAllocator allocator = new AasmRegisterAllocator();
+            x86RegisterAllocator allocator = new x86RegisterAllocator();
             Map<Node, Register> registers = allocator.allocateRegisters(graph);
             builder.append("function ")
                     .append(graph.name())
-                    .append(" {\n");
+                    .append(" \n");
             generateForGraph(graph, builder, registers);
             builder.append("}");
         }
         return builder.toString();
     }
+    public String generatePrologue(){
+        StringBuilder builder = new StringBuilder();
+        builder.append(".intel_syntax noprefix").append(System.lineSeparator())
+                .append(".global main").append(System.lineSeparator())
+                .append(".text").append(System.lineSeparator()).append(System.lineSeparator())
+                .append("main:").append(System.lineSeparator())
+                .append("call _main").append(System.lineSeparator()).append(System.lineSeparator());
+        builder.append("movq ").append(x86Registers.RDI.toString()).append(", ").append(x86Registers.RAX
+        ).append(System.lineSeparator()).append("movq ").append(x86Registers.RAX
+        ).append(System.lineSeparator()).append(" , 0x3c").append(System.lineSeparator())
+                .append("syscall").append(System.lineSeparator());
+        builder.append(System.lineSeparator()). append("_main:").append(System.lineSeparator());
+        return builder.toString();
+    }
+
 
     private void generateForGraph(IrGraph graph, StringBuilder builder, Map<Node, Register> registers) {
         Set<Node> visited = new HashSet<>();
