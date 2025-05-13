@@ -3,11 +3,7 @@ package edu.kit.kastel.vads.compiler.backend.x86;
 import edu.kit.kastel.vads.compiler.backend.regalloc.Register;
 import edu.kit.kastel.vads.compiler.backend.regalloc.RegisterAllocator;
 import edu.kit.kastel.vads.compiler.ir.IrGraph;
-import edu.kit.kastel.vads.compiler.ir.node.Block;
-import edu.kit.kastel.vads.compiler.ir.node.Node;
-import edu.kit.kastel.vads.compiler.ir.node.ProjNode;
-import edu.kit.kastel.vads.compiler.ir.node.ReturnNode;
-import edu.kit.kastel.vads.compiler.ir.node.StartNode;
+import edu.kit.kastel.vads.compiler.ir.node.*;
 import edu.kit.kastel.vads.compiler.backend.aasm.VirtualRegister;
 
 import java.util.*;
@@ -16,10 +12,11 @@ public class x86RegisterAllocator implements RegisterAllocator {
     private int id;
     private final Map<Node, Register> registers = new HashMap<>();
     private final Deque<x86Registers> availableRegisters = new ArrayDeque<>();
+
     public x86RegisterAllocator() {
         // Initialize the available registers
         for (x86Registers reg : x86Registers.values()) {
-            if (reg != x86Registers.RSP && reg != x86Registers.RBP) { // Stack- und Frame-Pointer auslassen
+            if (reg != x86Registers.RSP && reg != x86Registers.RBP&&reg!=x86Registers.RAX&&reg!=x86Registers.RDX&&reg!=x86Registers.R15) { // Stack- und Frame-Pointer auslassen
                 availableRegisters.add(reg);
             }
         }
@@ -48,6 +45,7 @@ public class x86RegisterAllocator implements RegisterAllocator {
 
     private static boolean needsRegister(Node node) {
         // TODO: add liveness analysis/needed analysis
-        return !(node instanceof ProjNode || node instanceof StartNode || node instanceof Block || node instanceof ReturnNode);
+        // TODO: add register freeing and const propagation (|| node instanceof ConstIntNode)
+        return !(node instanceof ProjNode || node instanceof StartNode || node instanceof Block || node instanceof ReturnNode );
     }
 }
