@@ -43,17 +43,17 @@ public class x86CodeGenerator {
         return builder.toString();
     }
     public String generatePrologue(){
-        return ".intel_syntax noprefix" + System.lineSeparator() +
-                ".global main" + System.lineSeparator() +
-                ".global _main" + System.lineSeparator() +
-                ".text" + System.lineSeparator() + System.lineSeparator() +
-                "main:" + System.lineSeparator() +
-                "call _main" + System.lineSeparator() +
-                System.lineSeparator() +
-                "movq " + x86Registers.RDI.toString() + ", " + x86Registers.RAX + System.lineSeparator() +
-                "movq " + x86Registers.RAX + " , 0x3c" + System.lineSeparator() +
-                "syscall" + System.lineSeparator() + System.lineSeparator() +
-                "_main:" + System.lineSeparator();
+        return ".intel_syntax noprefix" + "\n" +
+                ".global main\n" +
+                ".global _main\n" +
+                ".text\n\n" +
+                "main:\n" +
+                "call _main\n" +
+                "\n" +
+                "mov " + x86Registers.RDI.toString() + ", " + x86Registers.RAX + "\n" +
+                "mov " + x86Registers.RAX + " , 0x3c\n" +
+                "syscall\n\n" +
+                "_main:\n";
     }
 
 
@@ -73,14 +73,23 @@ public class x86CodeGenerator {
             case AddNode add -> binary(builder, registers, add, "add");
             case SubNode sub -> binary(builder, registers, sub, "sub");
             case MulNode mul -> binary(builder, registers, mul, "mul");
-            case DivNode div -> binary(builder, registers, div, "div");
-            case ModNode mod -> binary(builder, registers, mod, "mod");
-            case ReturnNode r -> builder.repeat(" ", 2).append("movq ").append(x86Registers.RAX.toString()).append(", ")
+            case DivNode div -> {
+                builder.append("mov ").append(x86Registers.RAX).append(", ")
+                        .append(registers.get(predecessorSkipProj(div, BinaryOperationNode.LEFT))).append("\n");
+                builder.append("cqo\n"); // Sign extension for division
+                builder.append("idiv ").append(registers.get(predecessorSkipProj(div, BinaryOperationNode.RIGHT))).append("\n");
+            }
+            case ModNode mod -> builder.append("mov ").append(x86Registers.RAX).append(", ")
+                    .append(registers.get(predecessorSkipProj(mod, BinaryOperationNode.LEFT))).append("\n")
+                    .append("cqo\n")
+                    .append("idiv ").append(registers.get(predecessorSkipProj(mod, BinaryOperationNode.RIGHT))).append("\n")
+                    .append("mov ").append(registers.get(mod)).append(", ").append(x86Registers.RDX).append("\n");
+            case ReturnNode r -> builder.repeat(" ", 2).append("mov ").append(x86Registers.RAX).append(", ")
                     .append(registers.get(predecessorSkipProj(r, ReturnNode.RESULT))).append(System.lineSeparator())
-                    .append("ret");
+                    .append("ret\n");
             case ConstIntNode c -> builder.repeat(" ", 2)
-                    .append(registers.get(c))
-                    .append(" = const ")
+                    .append("mov ")
+                    .append(registers.get(c)).append(", ")
                     .append(c.value());
             case Phi _ -> throw new UnsupportedOperationException("phi");
             case Block _, ProjNode _, StartNode _ -> {
@@ -91,16 +100,15 @@ public class x86CodeGenerator {
         builder.append("\n");
     }
 
-    private static void binary(
-            StringBuilder builder,
-            Map<Node, Register> registers,
-            BinaryOperationNode node,
-            String opcode
-    ) {
-        builder.repeat(" ", 2).append(opcode)
-                .append(" ")
-                .append(registers.get(predecessorSkipProj(node, BinaryOperationNode.LEFT)))
-                .append(", ")
-                .append(registers.get(predecessorSkipProj(node, BinaryOperationNode.RIGHT)));
-    }
+  private static void binary(
+      StringBuilder builder,
+      Map<Node, Register> registers,
+      BinaryOperationNode node,
+      String opcode) {
+    builder.repeat(" ", 2).append(opcode).append(" ").append(registers.get(node))
+        .append(", ")
+        .append(registers.get(predecessorSkipProj(node, BinaryOperationNode.LEFT)))
+        .append(", ")
+        .append(registers.get(predecessorSkipProj(node, BinaryOperationNode.RIGHT)));
+  }
 }
