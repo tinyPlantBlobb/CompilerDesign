@@ -9,15 +9,21 @@ import edu.kit.kastel.vads.compiler.ir.node.ProjNode;
 import edu.kit.kastel.vads.compiler.ir.node.ReturnNode;
 import edu.kit.kastel.vads.compiler.ir.node.StartNode;
 import edu.kit.kastel.vads.compiler.backend.aasm.VirtualRegister;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+
+import java.util.*;
 
 public class x86RegisterAllocator implements RegisterAllocator {
     private int id;
     private final Map<Node, Register> registers = new HashMap<>();
-
+    private final Deque<x86Registers> availableRegisters = new ArrayDeque<>();
+    public x86RegisterAllocator() {
+        // Initialize the available registers
+        for (x86Registers reg : x86Registers.values()) {
+            if (reg != x86Registers.RSP && reg != x86Registers.RBP) { // Stack- und Frame-Pointer auslassen
+                availableRegisters.add(reg);
+            }
+        }
+    }
     @Override
     public Map<Node, Register> allocateRegisters(IrGraph graph) {
         Set<Node> visited = new HashSet<>();
@@ -33,6 +39,9 @@ public class x86RegisterAllocator implements RegisterAllocator {
             }
         }
         if (needsRegister(node)) {
+            if (!availableRegisters.isEmpty()) {
+                    this.registers.put(node, availableRegisters.pop());
+            }
             this.registers.put(node, new VirtualRegister(this.id++));
         }
     }
