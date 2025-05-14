@@ -28,7 +28,7 @@ public class x86CodeGenerator {
         StringBuilder builder = new StringBuilder();
 
         for (IrGraph graph : program) {
-            x86RegisterAllocator allocator = new x86RegisterAllocator();
+            x86RegisterAllocator allocator = new x86RegisterAllocator(graph);
             Map<Node, Register> registers = allocator.allocateRegisters(graph);
             if (graph.name().equals("main")) {
                 builder.append(generatePrologue());
@@ -50,8 +50,8 @@ public class x86CodeGenerator {
                 "main:\n" +
                 "call _main\n" +
                 "\n" +
-                "mov " + x86Registers.RDI.toString() + ", " + x86Registers.RAX + "\n" +
-                "mov " + x86Registers.RAX + " , 0x3c\n" +
+                "mov " + x86Registers.RealRegisters.RDI + ", " + x86Registers.RealRegisters.RAX + "\n" +
+                "mov " + x86Registers.RealRegisters.RAX + " , 0x3c\n" +
                 "syscall\n\n" +
                 "_main:\n";
     }
@@ -74,17 +74,17 @@ public class x86CodeGenerator {
             case SubNode sub -> binary(builder, registers, sub, "sub");
             case MulNode mul -> binary(builder, registers, mul, "mul");
             case DivNode div -> {
-                builder.append("mov ").append(x86Registers.RAX).append(", ")
+                builder.append("mov ").append(x86Registers.RealRegisters.RAX).append(", ")
                         .append(registers.get(predecessorSkipProj(div, BinaryOperationNode.LEFT))).append("\n");
                 builder.append("cqo\n"); // Sign extension for division
                 builder.append("idiv ").append(registers.get(predecessorSkipProj(div, BinaryOperationNode.RIGHT))).append("\n");
             }
-            case ModNode mod -> builder.append("mov ").append(x86Registers.RAX).append(", ")
+            case ModNode mod -> builder.append("mov ").append(x86Registers.RealRegisters.RAX).append(", ")
                     .append(registers.get(predecessorSkipProj(mod, BinaryOperationNode.LEFT))).append("\n")
                     .append("cqo\n")
                     .append("idiv ").append(registers.get(predecessorSkipProj(mod, BinaryOperationNode.RIGHT))).append("\n")
-                    .append("mov ").append(registers.get(mod)).append(", ").append(x86Registers.RDX).append("\n");
-            case ReturnNode r -> builder.repeat(" ", 2).append("mov ").append(x86Registers.RAX).append(", ")
+                    .append("mov ").append(registers.get(mod)).append(", ").append(x86Registers.RealRegisters.RDX).append("\n");
+            case ReturnNode r -> builder.repeat(" ", 2).append("mov ").append(x86Registers.RealRegisters.RAX).append(", ")
                     .append(registers.get(predecessorSkipProj(r, ReturnNode.RESULT))).append(System.lineSeparator())
                     .append("ret\n");
             case ConstIntNode c -> builder.repeat(" ", 2)

@@ -1,5 +1,6 @@
 package edu.kit.kastel.vads.compiler.backend.x86;
 
+import edu.kit.kastel.vads.compiler.backend.LivenessAnalysis;
 import edu.kit.kastel.vads.compiler.backend.regalloc.Register;
 import edu.kit.kastel.vads.compiler.backend.regalloc.RegisterAllocator;
 import edu.kit.kastel.vads.compiler.ir.IrGraph;
@@ -13,28 +14,38 @@ public class x86RegisterAllocator implements RegisterAllocator {
     private final Map<Node, Register> registers = new HashMap<>();
     private final Deque<x86Registers> availableRegisters = new ArrayDeque<>();
 
-    public x86RegisterAllocator() {
+    public x86RegisterAllocator(IrGraph graph) {
         // Initialize the available registers
-        for (x86Registers reg : x86Registers.values()) {
-            if (reg != x86Registers.RSP && reg != x86Registers.RBP&&reg!=x86Registers.RAX&&reg!=x86Registers.RDX&&reg!=x86Registers.R15) { // Stack- und Frame-Pointer auslassen
+        for (x86Registers.RealRegisters reg : x86Registers.RealRegisters.values()) {
+            if (reg != x86Registers.RealRegisters.RSP && reg != x86Registers.RealRegisters.RBP&&reg!=x86Registers.RealRegisters.RAX&&reg!=x86Registers.RealRegisters.RDX&&reg!=x86Registers.RealRegisters.R15) { // Stack- und Frame-Pointer auslassen
                 availableRegisters.add(reg);
             }
+
         }
+        LivenessAnalysis analysis = new LivenessAnalysis();
+        analysis.analyzeLiveness(graph);
     }
     @Override
     public Map<Node, Register> allocateRegisters(IrGraph graph) {
         Set<Node> visited = new HashSet<>();
         visited.add(graph.endBlock());
-        scan(graph.endBlock(), visited);
+        scan(graph.endBlock(), visited, new ArrayList<>());
         return Map.copyOf(this.registers);
     }
 
-    private void scan(Node node, Set<Node> visited) {
+    private void scan(Node node, Set<Node> visited, List<Node> controlflow) {
+        /*
+        * add liveness analysis with backwards look by adding
+        * in a set of nodes and when the node numebr has to be live
+        * add when node is defines, when used and thus when it is live
+        */
+
         for (Node predecessor : node.predecessors()) {
             if (visited.add(predecessor)) {
-                scan(predecessor, visited);
+                scan(predecessor, visited, controlflow);
             }
         }
+        controlflow.add(node);
         if (needsRegister(node)) {
             if (!availableRegisters.isEmpty()) {
                     this.registers.put(node, availableRegisters.pop());
