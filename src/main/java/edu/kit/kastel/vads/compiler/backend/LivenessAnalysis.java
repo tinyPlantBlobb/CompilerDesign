@@ -37,11 +37,12 @@ private final Map<Node, Set<Node>> liveNodes;
         Set<Node> defs = getDefs(node);
         Set<Node> in = new HashSet<>(uses);
         Set<Node> out = new HashSet<>();
-
+//TODO: add liveness analysis with logic base from lecture properly
 
         for (Node predecessor : node.predecessors()) {
-            liveIn.add(predecessor);
-            out.addAll(liveIn);
+            getLivenessOfNode(predecessor, liveIn, liveOut, liveNodes);
+
+            out.addAll(liveOut);
         }
         in.addAll(out);
         in.removeAll(defs);
