@@ -31,24 +31,25 @@ private final Map<Node, Set<Node>> liveNodes;
             getLivenessOfNode(pre, liveIn, liveOut, liveNodes);
         }
     }
-    public void getLivenessOfNode(Node node, Set<Node> liveIn, Set<Node> liveOut, Map<Node, Set<Node>> liveNodes) {
+    public void getLivenessOfNode(Node node, Set<Node> liveIn, Set<Node> visited, Map<Node, Set<Node>> liveNodes) {
 
         Set<Node> uses = getUses(node);
         Set<Node> defs = getDefs(node);
-        Set<Node> in = new HashSet<>(uses);
-        Set<Node> out = new HashSet<>();
+        visited.add(node);
 //TODO: add liveness analysis with logic base from lecture properly
 
         for (Node predecessor : node.predecessors()) {
-            getLivenessOfNode(predecessor, liveIn, liveOut, liveNodes);
-
-            out.addAll(liveOut);
+            if(!visited.contains(predecessor)) {
+            liveIn.addAll(uses);
+            liveIn.removeAll(defs);
+            getLivenessOfNode(predecessor, liveIn, visited, liveNodes);
+          //liveIn.addAll(getUses(predecessor));
+          //liveIn.removeAll(getDefs(predecessor));
         }
-        in.addAll(out);
-        in.removeAll(defs);
-        liveNodes.put(node, in);
-        liveIn.addAll(in);
-        liveOut.addAll(out);
+        }
+        liveIn.removeAll(defs);
+        liveNodes.put(node, liveIn);
+
 
     }
     private Set<Node> getUses(Node node) {
