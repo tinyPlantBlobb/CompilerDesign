@@ -13,8 +13,10 @@ public class x86RegisterAllocator implements RegisterAllocator {
     private int id;
     private final Map<Node, Register> registers = new HashMap<>();
     private final Deque<x86Registers> availableRegisters = new ArrayDeque<>();
+    private final LivenessAnalysis analysis;
 
     public x86RegisterAllocator(IrGraph graph) {
+
         // Initialize the available registers
         for (x86Registers.RealRegisters reg : x86Registers.RealRegisters.values()) {
             if (reg != x86Registers.RealRegisters.RSP && reg != x86Registers.RealRegisters.RBP&&reg!=x86Registers.RealRegisters.RAX&&reg!=x86Registers.RealRegisters.RDX&&reg!=x86Registers.RealRegisters.R15) { // Stack- und Frame-Pointer auslassen
@@ -22,8 +24,8 @@ public class x86RegisterAllocator implements RegisterAllocator {
             }
 
         }
-        LivenessAnalysis analysis = new LivenessAnalysis();
-        analysis.analyzeLiveness(graph);
+        this.analysis = new LivenessAnalysis();
+        this.analysis.analyzeLiveness(graph);
     }
     @Override
     public Map<Node, Register> allocateRegisters(IrGraph graph) {

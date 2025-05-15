@@ -32,6 +32,7 @@ public class x86CodeGenerator {
             Map<Node, Register> registers = allocator.allocateRegisters(graph);
             if (graph.name().equals("main")) {
                 builder.append(generatePrologue());
+                //generateForGraph(graph, builder, registers);
             }else{
                 builder.append(graph.name())
                         .append(": \n");
@@ -64,7 +65,8 @@ public class x86CodeGenerator {
 
     private void scan(Node node, Set<Node> visited, StringBuilder builder, Map<Node, Register> registers) {
         for (Node predecessor : node.predecessors()) {
-            if (visited.add(predecessor)) {
+            if (!visited.contains(predecessor)) {
+                visited.add(predecessor);
                 scan(predecessor, visited, builder, registers);
             }
         }
@@ -107,7 +109,7 @@ public class x86CodeGenerator {
       String opcode) {
     builder.repeat(" ", 2).append(opcode).append(" ").append(registers.get(node))
         .append(", ")
-        .append(registers.get(predecessorSkipProj(node, BinaryOperationNode.LEFT)))
+        .append(registers.get(predecessorSkipProj(node, BinaryOperationNode.LEFT)).toString())
         .append(", ")
         .append(registers.get(predecessorSkipProj(node, BinaryOperationNode.RIGHT)));
   }
