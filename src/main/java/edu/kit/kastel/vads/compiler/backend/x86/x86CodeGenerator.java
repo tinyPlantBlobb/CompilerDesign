@@ -15,10 +15,7 @@ import edu.kit.kastel.vads.compiler.ir.node.ReturnNode;
 import edu.kit.kastel.vads.compiler.ir.node.StartNode;
 import edu.kit.kastel.vads.compiler.ir.node.SubNode;
 import edu.kit.kastel.vads.compiler.ir.util.GraphVizPrinter;
-import edu.kit.kastel.vads.compiler.ir.util.YCompPrinter;
 
-import java.io.File;
-import java.io.FileDescriptor;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.HashSet;
@@ -40,13 +37,15 @@ public class x86CodeGenerator {
 
             try {
                 FileWriter file = new FileWriter("graph.vcg", true);
+                FileWriter registerfile = new FileWriter("register.txt", true);
                 file.write(GraphVizPrinter.print(graph));
                 System.out.println(GraphVizPrinter.print(graph));
-                file.write("\nregisters:\n");
-                file.write(registers.keySet().stream()
+                registerfile.write(graph.name()+":\n");
+                registerfile.write(registers.keySet().stream()
                         .map(key -> key + "=" + registers.get(key))
                         .collect(Collectors.joining(", ", "{", "}")));
                 file.close();
+                registerfile.close();
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
