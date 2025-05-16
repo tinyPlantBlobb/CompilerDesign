@@ -14,11 +14,18 @@ import edu.kit.kastel.vads.compiler.ir.node.ProjNode;
 import edu.kit.kastel.vads.compiler.ir.node.ReturnNode;
 import edu.kit.kastel.vads.compiler.ir.node.StartNode;
 import edu.kit.kastel.vads.compiler.ir.node.SubNode;
+import edu.kit.kastel.vads.compiler.ir.util.GraphVizPrinter;
+import edu.kit.kastel.vads.compiler.ir.util.YCompPrinter;
 
+import java.io.File;
+import java.io.FileDescriptor;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static edu.kit.kastel.vads.compiler.ir.util.NodeSupport.predecessorSkipProj;
 
@@ -30,6 +37,20 @@ public class x86CodeGenerator {
         for (IrGraph graph : program) {
             x86RegisterAllocator allocator = new x86RegisterAllocator(graph);
             Map<Node, Register> registers = allocator.allocateRegisters(graph);
+
+            try {
+                FileWriter file = new FileWriter("graph.vcg", true);
+                file.write(GraphVizPrinter.print(graph));
+                System.out.println(GraphVizPrinter.print(graph));
+                file.write("\nregisters:\n");
+                file.write(registers.keySet().stream()
+                        .map(key -> key + "=" + registers.get(key))
+                        .collect(Collectors.joining(", ", "{", "}")));
+                file.close();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+
             if (graph.name().equals("main")) {
                 builder.append(generatePrologue());
                 generateForGraph(graph, builder, registers);
@@ -79,12 +100,12 @@ public class x86CodeGenerator {
                 builder.append("mov ").append(x86Registers.RealRegisters.RAX).append(", ")
                         .append(registers.get(predecessorSkipProj(div, BinaryOperationNode.LEFT))).append("\n");
                 builder.append("cqo\n"); // Sign extension for division
-                builder.append("idiv ").append(registers.get(div.predecessors().get(1))).append("\n");
+                builder.append("idiv ").append(registers.get(predecessorSkipProj(div, BinaryOperationNode.RIGHT))).append("\n");
             }
             case ModNode mod -> builder.append("mov ").append(x86Registers.RealRegisters.RAX).append(", ")
-                    .append(registers.get(mod.predecessors().get(0))).append("\n")
+                    .append(registers.get(predecessorSkipProj(mod, BinaryOperationNode.LEFT))).append("\n")
                     .append("cqo\n")
-                    .append("idiv ").append(registers.get(mod.predecessors().get(1))).append("\n")
+                    .append("idiv ").append(registers.get(predecessorSkipProj(mod, BinaryOperationNode.RIGHT))).append("\n")
                     .append("mov ").append(registers.get(mod)).append(", ").append(x86Registers.RealRegisters.RDX).append("\n");
             case ReturnNode r -> builder.repeat(" ", 2).append("mov ").append(x86Registers.RealRegisters.RAX).append(", ")
                     .append(registers.get(r)).append(System.lineSeparator())
@@ -107,10 +128,16 @@ public class x86CodeGenerator {
       Map<Node, Register> registers,
       BinaryOperationNode node,
       String opcode) {
-    builder.repeat(" ", 2).append(opcode).append(" ").append(registers.get(node))
+        Register target = registers.get(node);
+        Register left = registers.get(predecessorSkipProj(node, BinaryOperationNode.LEFT));
+        Register right = registers.get(predecessorSkipProj(node, BinaryOperationNode.RIGHT));
+    builder.repeat(" ", 2)
+            .append("mov ")
+            .append(target).append(", ")
+            .append(left)
+            .append(opcode).append(" ")
+            .append(target)
         .append(", ")
-        .append(registers.get(node.predecessors().get(0)))
-        .append(", ")
-        .append(registers.get(node.predecessors().get(1)));
+        .append(right);
   }
 }

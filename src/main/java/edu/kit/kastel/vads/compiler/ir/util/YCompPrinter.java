@@ -33,6 +33,7 @@ public class YCompPrinter {
     private int blockCounter = 0;
 
     public YCompPrinter(IrGraph graph) {
+
         this.graph = graph;
     }
 

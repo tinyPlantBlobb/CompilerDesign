@@ -43,7 +43,7 @@ public class x86RegisterAllocator implements RegisterAllocator {
         */
 
         for (Node predecessor : node.predecessors()) {
-            if (visited.add(predecessor)) {
+            if (!visited.contains(predecessor)) {
                 scan(predecessor, visited, controlflow);
             }
         }
