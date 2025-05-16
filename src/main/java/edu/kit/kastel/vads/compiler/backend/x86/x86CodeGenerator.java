@@ -32,7 +32,7 @@ public class x86CodeGenerator {
             Map<Node, Register> registers = allocator.allocateRegisters(graph);
             if (graph.name().equals("main")) {
                 builder.append(generatePrologue());
-                //generateForGraph(graph, builder, registers);
+                generateForGraph(graph, builder, registers);
             }else{
                 builder.append(graph.name())
                         .append(": \n");
@@ -79,15 +79,15 @@ public class x86CodeGenerator {
                 builder.append("mov ").append(x86Registers.RealRegisters.RAX).append(", ")
                         .append(registers.get(predecessorSkipProj(div, BinaryOperationNode.LEFT))).append("\n");
                 builder.append("cqo\n"); // Sign extension for division
-                builder.append("idiv ").append(registers.get(predecessorSkipProj(div, BinaryOperationNode.RIGHT))).append("\n");
+                builder.append("idiv ").append(registers.get(div.predecessors().get(1))).append("\n");
             }
             case ModNode mod -> builder.append("mov ").append(x86Registers.RealRegisters.RAX).append(", ")
-                    .append(registers.get(predecessorSkipProj(mod, BinaryOperationNode.LEFT))).append("\n")
+                    .append(registers.get(mod.predecessors().get(0))).append("\n")
                     .append("cqo\n")
-                    .append("idiv ").append(registers.get(predecessorSkipProj(mod, BinaryOperationNode.RIGHT))).append("\n")
+                    .append("idiv ").append(registers.get(mod.predecessors().get(1))).append("\n")
                     .append("mov ").append(registers.get(mod)).append(", ").append(x86Registers.RealRegisters.RDX).append("\n");
             case ReturnNode r -> builder.repeat(" ", 2).append("mov ").append(x86Registers.RealRegisters.RAX).append(", ")
-                    .append(registers.get(predecessorSkipProj(r, ReturnNode.RESULT))).append(System.lineSeparator())
+                    .append(registers.get(r)).append(System.lineSeparator())
                     .append("ret\n");
             case ConstIntNode c -> builder.repeat(" ", 2)
                     .append("mov ")
@@ -109,8 +109,8 @@ public class x86CodeGenerator {
       String opcode) {
     builder.repeat(" ", 2).append(opcode).append(" ").append(registers.get(node))
         .append(", ")
-        .append(registers.get(predecessorSkipProj(node, BinaryOperationNode.LEFT)).toString())
+        .append(registers.get(node.predecessors().get(0)))
         .append(", ")
-        .append(registers.get(predecessorSkipProj(node, BinaryOperationNode.RIGHT)));
+        .append(registers.get(node.predecessors().get(1)));
   }
 }

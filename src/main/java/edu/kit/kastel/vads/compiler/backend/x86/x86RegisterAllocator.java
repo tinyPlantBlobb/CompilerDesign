@@ -16,7 +16,7 @@ public class x86RegisterAllocator implements RegisterAllocator {
     private final LivenessAnalysis analysis;
 
     public x86RegisterAllocator(IrGraph graph) {
-
+        this.id=0;
         // Initialize the available registers
         for (x86Registers.RealRegisters reg : x86Registers.RealRegisters.values()) {
             if (reg != x86Registers.RealRegisters.RSP && reg != x86Registers.RealRegisters.RBP&&reg!=x86Registers.RealRegisters.RAX&&reg!=x86Registers.RealRegisters.RDX&&reg!=x86Registers.RealRegisters.R15) { // Stack- und Frame-Pointer auslassen
@@ -52,13 +52,15 @@ public class x86RegisterAllocator implements RegisterAllocator {
             if (!availableRegisters.isEmpty()) {
                     this.registers.put(node, availableRegisters.pop());
             }
-            this.registers.put(node, new VirtualRegister(this.id++));
+            else {
+                this.registers.put(node, new VirtualRegister(this.id++));
+            }
         }
     }
 
     private static boolean needsRegister(Node node) {
         // TODO: add liveness analysis/needed analysis
         // TODO: add register freeing and const propagation (|| node instanceof ConstIntNode)
-        return !(node instanceof ProjNode || node instanceof StartNode || node instanceof Block || node instanceof ReturnNode );
+        return !(node instanceof ProjNode || node instanceof StartNode || node instanceof Block );
     }
 }
