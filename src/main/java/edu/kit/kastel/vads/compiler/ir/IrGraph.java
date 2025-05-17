@@ -3,11 +3,7 @@ package edu.kit.kastel.vads.compiler.ir;
 import edu.kit.kastel.vads.compiler.ir.node.Block;
 import edu.kit.kastel.vads.compiler.ir.node.Node;
 
-import java.util.IdentityHashMap;
-import java.util.LinkedHashSet;
-import java.util.Map;
-import java.util.SequencedSet;
-import java.util.Set;
+import java.util.*;
 
 public class IrGraph {
     private final Map<Node, SequencedSet<Node>> successors = new IdentityHashMap<>();
@@ -36,6 +32,23 @@ public class IrGraph {
             return Set.of();
         }
         return Set.copyOf(successors);
+    }
+
+    public List<Node> getControlFlowOrder() {
+        List<Node> controlFlowOrder = new ArrayList<>();
+        Set<Node> visited = new HashSet<>();
+        traverseControlFlow(this.startBlock(), visited, controlFlowOrder);
+        return controlFlowOrder;
+    }
+
+    private void traverseControlFlow(Node node, Set<Node> visited, List<Node> controlFlowOrder) {
+        if (!visited.contains(node)) {
+            visited.add(node);
+            for (Node successor : this.successors(node)) { // Verwende die successors-Methode von IrGraph
+                traverseControlFlow(successor, visited, controlFlowOrder);
+            }
+            controlFlowOrder.add(node);
+        }
     }
 
     public Block startBlock() {

@@ -30,7 +30,7 @@ public class x86CodeGenerator {
 
     public String generateCode(List<IrGraph> program) {
         StringBuilder builder = new StringBuilder();
-
+        builder.append(prologue());
         for (IrGraph graph : program) {
             x86RegisterAllocator allocator = new x86RegisterAllocator(graph);
             Map<Node, Register> registers = allocator.allocateRegisters(graph);
@@ -39,7 +39,9 @@ public class x86CodeGenerator {
                 FileWriter file = new FileWriter("graph.vcg", true);
                 FileWriter registerfile = new FileWriter("register.txt", true);
                 file.write(GraphVizPrinter.print(graph));
-                System.out.println(GraphVizPrinter.print(graph));
+                System.out.println(registers.keySet().stream()
+                        .map(key -> key + "=" + registers.get(key))
+                        .collect(Collectors.joining(", ", "{", "}")));
                 registerfile.write(graph.name()+":\n");
                 registerfile.write(registers.keySet().stream()
                         .map(key -> key + "=" + registers.get(key))
@@ -51,7 +53,7 @@ public class x86CodeGenerator {
             }
 
             if (graph.name().equals("main")) {
-                builder.append(generatePrologue());
+                builder.append(generatePrologue("main_"));
                 generateForGraph(graph, builder, registers);
             }else{
                 builder.append(graph.name())
@@ -61,9 +63,10 @@ public class x86CodeGenerator {
 
 
         }
+        System.out.println(builder);
         return builder.toString();
     }
-    public String generatePrologue(){
+    public String prologue(){
         return ".intel_syntax noprefix" + "\n" +
                 ".global main\n" +
                 ".global _main\n" +
@@ -73,10 +76,11 @@ public class x86CodeGenerator {
                 "\n" +
                 "mov " + x86Registers.RealRegisters.RDI + ", " + x86Registers.RealRegisters.RAX + "\n" +
                 "mov " + x86Registers.RealRegisters.RAX + " , 0x3c\n" +
-                "syscall\n\n" +
-                "_main:\n";
+                "syscall\n\n";
     }
-
+    public  String generatePrologue(String name){
+        return ".global"+ name+ "\n"+ name+":\n";
+    }
 
     private void generateForGraph(IrGraph graph, StringBuilder builder, Map<Node, Register> registers) {
         Set<Node> visited = new HashSet<>();
@@ -106,8 +110,11 @@ public class x86CodeGenerator {
                     .append("cqo\n")
                     .append("idiv ").append(registers.get(predecessorSkipProj(mod, BinaryOperationNode.RIGHT))).append("\n")
                     .append("mov ").append(registers.get(mod)).append(", ").append(x86Registers.RealRegisters.RDX).append("\n");
-            case ReturnNode r -> builder.repeat(" ", 2).append("mov ").append(x86Registers.RealRegisters.RAX).append(", ")
-                    .append(registers.get(r)).append(System.lineSeparator())
+            case ReturnNode r -> builder.repeat(" ", 2)
+                    .append("mov ").append(x86Registers.RealRegisters.RAX)
+                    .append(", ")
+                    .append(registers.get(predecessorSkipProj(r, ReturnNode.RESULT)))
+                    .append(System.lineSeparator())
                     .append("ret\n");
             case ConstIntNode c -> builder.repeat(" ", 2)
                     .append("mov ")
@@ -133,10 +140,9 @@ public class x86CodeGenerator {
     builder.repeat(" ", 2)
             .append("mov ")
             .append(target).append(", ")
-            .append(left)
+            .append(left).append("\n  ")
             .append(opcode).append(" ")
-            .append(target)
-        .append(", ")
-        .append(right);
+            .append(target).append(", ")
+        .append(right).append("\n");
   }
 }
