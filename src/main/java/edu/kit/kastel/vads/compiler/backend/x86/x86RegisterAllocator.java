@@ -19,7 +19,7 @@ public class x86RegisterAllocator implements RegisterAllocator {
         // Initialize the available registers
         for (x86Registers.RealRegisters reg : x86Registers.RealRegisters.values()) {
             if (reg != x86Registers.RealRegisters.RSP && reg != x86Registers.RealRegisters.RBP&&reg
-                    !=x86Registers.RealRegisters.EAX&&reg!=x86Registers.RealRegisters.EDX&&reg!=x86Registers.RealRegisters.R15) { // Stack- und Frame-Pointer auslassen
+                    !=x86Registers.RealRegisters.EAX&&reg!=x86Registers.RealRegisters.EDX&&reg!=x86Registers.RealRegisters.R15D) { // Stack- und Frame-Pointer auslassen
                 availableRegisters.add(reg);
             }
 
@@ -54,7 +54,7 @@ public class x86RegisterAllocator implements RegisterAllocator {
                     this.registers.put(node, availableRegisters.pop());
             }
             else {
-                this.registers.put(node, new VirtualRegister(this.id++));
+                this.registers.put(node, new x86Registers.OverflowRegisters(this.id++));
             }
         }
     }
@@ -64,4 +64,5 @@ public class x86RegisterAllocator implements RegisterAllocator {
         // TODO: add register freeing and const propagation (|| node instanceof ConstIntNode)
         return !(node instanceof ProjNode || node instanceof StartNode || node instanceof Block );
     }
+
 }

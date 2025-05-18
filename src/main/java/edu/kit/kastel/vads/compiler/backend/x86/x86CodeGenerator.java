@@ -104,7 +104,7 @@ public class x86CodeGenerator {
 
         switch (node) {
             case AddNode add -> binary(builder, registers, add, "add");
-            case SubNode sub -> binary(builder, registers, sub, "sub");
+            case SubNode sub -> binary(builder, registers, sub, "sub", false);
             case MulNode mul -> binary(builder, registers, mul, "mul");
             case DivNode div -> {
                 builder.append("mov ").append(x86Registers.RealRegisters.EAX).append(", ")
@@ -140,11 +140,25 @@ public class x86CodeGenerator {
       StringBuilder builder,
       Map<Node, Register> registers,
       BinaryOperationNode node,
-      String opcode) {
+      String opcode
+      ) {
         Register target = registers.get(node);
         Register left = registers.get(predecessorSkipProj(node, BinaryOperationNode.LEFT));
         Register right = registers.get(predecessorSkipProj(node, BinaryOperationNode.RIGHT));
-    builder.repeat(" ", 2)
+        if (target.equals(left)) {
+            builder.append("  ")
+                .append(opcode).append(" ")
+                .append(target).append(", ")
+                .append(right).append("\n");
+            return;
+        } else if (target.equals(right)) {
+            builder.append("  ")
+                .append(opcode).append(" ")
+                .append(target).append(", ")
+                .append(left).append("\n");
+            return;
+        } else {
+        builder.repeat(" ", 2)
             .append("mov ")
             .append(target).append(", ")
             .append(left).append("\n  ")
@@ -152,4 +166,31 @@ public class x86CodeGenerator {
             .append(target).append(", ")
         .append(right).append("\n");
   }
+    }
+
+    private static void binary(
+            StringBuilder builder,
+            Map<Node, Register> registers,
+            BinaryOperationNode node,
+            String opcode,
+            boolean commutative) {
+        Register target = registers.get(node);
+        Register left = registers.get(predecessorSkipProj(node, BinaryOperationNode.LEFT));
+        Register right = registers.get(predecessorSkipProj(node, BinaryOperationNode.RIGHT));
+        if (target.equals(left)) {
+            builder.append("  ")
+                    .append(opcode).append(" ")
+                    .append(target).append(", ")
+                    .append(right).append("\n");
+            return;
+
+        }
+        builder.repeat(" ", 2)
+                .append("mov ")
+                .append(target).append(", ")
+                .append(left).append("\n  ")
+                .append(opcode).append(" ")
+                .append(target).append(", ")
+                .append(right).append("\n");
+    }
 }
