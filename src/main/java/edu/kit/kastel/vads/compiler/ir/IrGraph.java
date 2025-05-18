@@ -37,18 +37,20 @@ public class IrGraph {
     public List<Node> getControlFlowOrder() {
         List<Node> controlFlowOrder = new ArrayList<>();
         Set<Node> visited = new HashSet<>();
-        traverseControlFlow(this.startBlock(), visited, controlFlowOrder);
+        visited.add(endBlock);
+        traverseControlFlow(endBlock(), visited, controlFlowOrder);
         return controlFlowOrder;
     }
 
     private void traverseControlFlow(Node node, Set<Node> visited, List<Node> controlFlowOrder) {
-        if (!visited.contains(node)) {
-            visited.add(node);
-            for (Node successor : this.successors(node)) { // Verwende die successors-Methode von IrGraph
-                traverseControlFlow(successor, visited, controlFlowOrder);
+        for (Node predecessors : node.predecessors()) {
+            if (!visited.contains(predecessors)) {
+
+                visited.add(predecessors);
+                traverseControlFlow(predecessors, visited, controlFlowOrder);
             }
-            controlFlowOrder.add(node);
         }
+        controlFlowOrder.add(node);
     }
 
     public Block startBlock() {

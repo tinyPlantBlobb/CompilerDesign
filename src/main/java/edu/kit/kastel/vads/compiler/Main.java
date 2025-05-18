@@ -3,7 +3,8 @@ package edu.kit.kastel.vads.compiler;
 import edu.kit.kastel.vads.compiler.backend.x86.x86CodeGenerator;
 import edu.kit.kastel.vads.compiler.ir.IrGraph;
 import edu.kit.kastel.vads.compiler.ir.SsaTranslation;
-import edu.kit.kastel.vads.compiler.ir.optimize.LocalValueNumbering;
+import edu.kit.kastel.vads.compiler.ir.optimize.ConstantFolding;
+//import edu.kit.kastel.vads.compiler.ir.optimize.LocalValueNumbering;
 import edu.kit.kastel.vads.compiler.ir.util.YCompPrinter;
 import edu.kit.kastel.vads.compiler.lexer.Lexer;
 import edu.kit.kastel.vads.compiler.parser.ParseException;
@@ -38,7 +39,7 @@ public class Main {
     }
     List<IrGraph> graphs = new ArrayList<>();
     for (FunctionTree function : program.topLevelTrees()) {
-      SsaTranslation translation = new SsaTranslation(function, new LocalValueNumbering());
+      SsaTranslation translation = new SsaTranslation(function, new ConstantFolding());
       graphs.add(translation.translate());
 
     }

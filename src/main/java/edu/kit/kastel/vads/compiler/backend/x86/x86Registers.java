@@ -13,14 +13,14 @@ public sealed interface x86Registers extends Register permits x86Registers.RealR
     EDI,
     RSP,
     RBP,
-    R8,
-    R9,
-    R10,
-    R11,
-    R12,
-    R13,
-    R14,
-    R15;
+    R8D,
+    R9D,
+    R10D,
+    R11D,
+    R12D,
+    R13D,
+    R14D,
+    R15D;
 
 
     @Override

@@ -9,6 +9,8 @@ import edu.kit.kastel.vads.compiler.ir.node.ReturnNode;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static edu.kit.kastel.vads.compiler.ir.util.NodeSupport.predecessorSkipProj;
+
 public class LivenessAnalysis {
 private final Set<Node> liveIn;
 
@@ -100,10 +102,10 @@ private final Map<Node, Set<Node>> liveNodes;
     private Set<Node> getUses(Node node) {
         Set<Node> uses = new HashSet<>();
         if (node instanceof BinaryOperationNode){
-            uses.add(node.predecessors().get(0));
-            uses.add(node.predecessors().get(1));
+            uses.add(predecessorSkipProj(node, BinaryOperationNode.LEFT));
+            uses.add(predecessorSkipProj(node, BinaryOperationNode.RIGHT));
         } else if (node instanceof ReturnNode){
-            uses.add(node.predecessors().get(1));
+            uses.add(predecessorSkipProj(node, ReturnNode.RESULT));
         }
 
         return uses;
@@ -112,7 +114,6 @@ private final Map<Node, Set<Node>> liveNodes;
     private Set<Node> getDefs(Node node) {
         Set<Node> defs = new HashSet<>();
         if ( node instanceof ConstIntNode || node instanceof BinaryOperationNode) {
-
             defs.add(node);
         }
         return defs;

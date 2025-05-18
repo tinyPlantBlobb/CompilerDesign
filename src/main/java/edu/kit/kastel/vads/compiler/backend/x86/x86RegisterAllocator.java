@@ -5,7 +5,7 @@ import edu.kit.kastel.vads.compiler.backend.regalloc.Register;
 import edu.kit.kastel.vads.compiler.backend.regalloc.RegisterAllocator;
 import edu.kit.kastel.vads.compiler.ir.IrGraph;
 import edu.kit.kastel.vads.compiler.ir.node.*;
-import edu.kit.kastel.vads.compiler.backend.aasm.VirtualRegister;
+
 
 import java.util.*;
 
@@ -19,19 +19,28 @@ public class x86RegisterAllocator implements RegisterAllocator {
         // Initialize the available registers
         for (x86Registers.RealRegisters reg : x86Registers.RealRegisters.values()) {
             if (reg != x86Registers.RealRegisters.RSP && reg != x86Registers.RealRegisters.RBP&&reg
-                    !=x86Registers.RealRegisters.EAX&&reg!=x86Registers.RealRegisters.EDX&&reg!=x86Registers.RealRegisters.R15) { // Stack- und Frame-Pointer auslassen
+                    !=x86Registers.RealRegisters.EAX&&reg!=x86Registers.RealRegisters.EDX&&reg!=x86Registers.RealRegisters.R15D) { // Stack- und Frame-Pointer auslassen
                 availableRegisters.add(reg);
             }
-
         }
         this.analysis = new LivenessAnalysis();
         this.analysis.analyzeLiveness(graph);
     }
     @Override
     public Map<Node, Register> allocateRegisters(IrGraph graph) {
-        Set<Node> visited = new HashSet<>();
-        visited.add(graph.endBlock());
-        scan(graph.endBlock(), visited, new ArrayList<>());
+//        Set<Node> visited = new HashSet<>();
+//        visited.add(graph.endBlock());
+//        scan(graph.endBlock(), visited, new ArrayList<>());
+        for (Node node : graph.getControlFlowOrder()) {
+            if (needsRegister(node)) {
+                if (!availableRegisters.isEmpty()) {
+                    this.registers.put(node, availableRegisters.pop());
+                }
+                else {
+                    this.registers.put(node, new x86Registers.OverflowRegisters(this.id++));
+                }
+            }
+        }
         return Map.copyOf(this.registers);
     }
 
@@ -49,19 +58,12 @@ public class x86RegisterAllocator implements RegisterAllocator {
         }
 
         controlflow.add(node);
-        if (needsRegister(node)) {
-            if (!availableRegisters.isEmpty()) {
-                    this.registers.put(node, availableRegisters.pop());
-            }
-            else {
-                this.registers.put(node, new VirtualRegister(this.id++));
-            }
-        }
+
     }
 
     private static boolean needsRegister(Node node) {
-        // TODO: add liveness analysis/needed analysis
-        // TODO: add register freeing and const propagation (|| node instanceof ConstIntNode)
-        return !(node instanceof ProjNode || node instanceof StartNode || node instanceof Block );
+
+        return !(node instanceof ProjNode || node instanceof StartNode || node instanceof Block  );
     }
+
 }
