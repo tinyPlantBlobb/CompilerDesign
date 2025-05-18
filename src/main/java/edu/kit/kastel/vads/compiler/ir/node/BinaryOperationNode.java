@@ -12,6 +12,8 @@ public sealed abstract class BinaryOperationNode extends Node permits AddNode, D
         super(block, left, right, sideEffect);
     }
 
+
+
     protected static int commutativeHashCode(BinaryOperationNode node) {
         int h = node.block().hashCode();
         // commutative operation: we want h(op(x, y)) == h(op(y, x))
