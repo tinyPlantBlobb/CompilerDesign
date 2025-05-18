@@ -34,23 +34,23 @@ public class x86CodeGenerator {
         for (IrGraph graph : program) {
             x86RegisterAllocator allocator = new x86RegisterAllocator(graph);
             Map<Node, Register> registers = allocator.allocateRegisters(graph);
-
-            try {
-                FileWriter file = new FileWriter("graph.vcg", true);
-                FileWriter registerfile = new FileWriter("register.txt", true);
-                file.write(GraphVizPrinter.print(graph));
-                System.out.println(registers.keySet().stream()
-                        .map(key -> key + "=" + registers.get(key))
-                        .collect(Collectors.joining(", ", "{", "}")));
-                registerfile.write(graph.name()+":\n");
-                registerfile.write(registers.keySet().stream()
-                        .map(key -> key + "=" + registers.get(key))
-                        .collect(Collectors.joining(", ", "{", "}\n ")));
-                file.close();
-                registerfile.close();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+//
+//            try {
+//                FileWriter file = new FileWriter("graph.vcg", true);
+//                FileWriter registerfile = new FileWriter("register.txt", true);
+//                file.write(GraphVizPrinter.print(graph));
+//                System.out.println(registers.keySet().stream()
+//                        .map(key -> key + "=" + registers.get(key))
+//                        .collect(Collectors.joining(", ", "{", "}")));
+//                registerfile.write(graph.name()+":\n");
+//                registerfile.write(registers.keySet().stream()
+//                        .map(key -> key + "=" + registers.get(key))
+//                        .collect(Collectors.joining(", ", "{", "}\n ")));
+//                file.close();
+//                registerfile.close();
+//            } catch (IOException e) {
+//                throw new RuntimeException(e);
+//            }
 
             if (graph.name().equals("main")) {
                 builder.append(generatePrologue("main_"));
