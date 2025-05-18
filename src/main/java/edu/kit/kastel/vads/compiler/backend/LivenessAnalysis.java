@@ -11,14 +11,16 @@ import java.util.stream.Collectors;
 
 public class LivenessAnalysis {
 private final Set<Node> liveIn;
-private final Set<Node> liveOut;
+
 private final Map<Node, Set<Node>> liveNodes;
-private List<Node> controlFlowGraph;
+
+    private final Map<IrGraph, List<Node>> controlFlowOrders;
     public LivenessAnalysis() {
         liveIn= new HashSet<>();
-        liveOut= new HashSet<>();
+
         liveNodes = new HashMap<>();
-        controlFlowGraph = new ArrayList<>();  }
+        controlFlowOrders = new HashMap<>();
+    }
 
     /**
      * Analyzes the liveness of variables in the given IR graph.
@@ -28,10 +30,10 @@ private List<Node> controlFlowGraph;
     public void analyzeLiveness(IrGraph irGraph) {
         Node node = irGraph.endBlock();
             // Perform liveness analysis for each block
-        controlFlowGraph= irGraph.getControlFlowOrder();
+        controlFlowOrders.put(irGraph ,irGraph.getControlFlowOrder());
 
         for(Node pre: node.predecessors()) {
-            getLivenessOfNode(pre, liveIn, liveOut, liveNodes);
+            getLivenessOfNode(pre, liveIn, liveNodes);
         }
     }
     public List<Node> successors(Node node) {
@@ -44,26 +46,34 @@ private List<Node> controlFlowGraph;
         return successors;
     }
 
-    public void getLivenessOfNode(Node node, Set<Node> liveIn, Set<Node> visited, Map<Node, Set<Node>> liveNodes) {
-        Map<Node, Set<Node>> inValues = new HashMap<>();
-        Set<Node> uses = getUses(node);
-        Set<Node> defs = getDefs(node);
+    public void getLivenessOfNode(Node node, Set<Node> visited, Map<Node, Set<Node>> liveNodes) {
+
+        if (visited.contains(node)) {
+            return;
+        }
         visited.add(node);
-        List<Set<Node>> inputs = successors(node).stream().map(inValues::get).filter(Objects::nonNull)
-                .collect(Collectors.toList());
+
+        // Berechnung von liveOut
+        Set<Node> liveOut = getLiveOut(node, successors(node).stream().map(liveNodes::get).collect(Collectors.toList()));
+
+
 //TODO: add liveness analysis with logic base from lecture properly
+        if (liveNodes.containsKey(node) && liveNodes.get(node).equals(liveIn)) {
+            return;
+        }
+        liveNodes.put(node, liveIn);
+        for (Node successor : successors(node)) {
+            Set<Node> successorLiveIn = liveNodes.getOrDefault(successor, new HashSet<>());
+            liveOut.addAll(successorLiveIn);
+        }
+        // compute liveIn
+        Set<Node> liveIn = new HashSet<>(getUses(node));
+        liveOut.removeAll(getDefs(node));
+        liveIn.addAll(liveOut);
 
         for (Node predecessor : node.predecessors()) {
-            if(!visited.contains(predecessor)) {
-            liveIn.addAll(uses);
-            liveIn.removeAll(defs);
-            getLivenessOfNode(predecessor, liveIn, visited, liveNodes);
-          //liveIn.addAll(getUses(predecessor));
-          //liveIn.removeAll(getDefs(predecessor));
+            getLivenessOfNode(predecessor, visited, liveNodes);
         }
-        }
-        liveIn.removeAll(defs);
-        liveNodes.put(node, liveIn);
 
 
     }
@@ -75,6 +85,8 @@ private List<Node> controlFlowGraph;
         liveIn.addAll(liveOut);
         return liveIn;
     }
+
+
     private Set<Node> getLiveOut(Node node, List<Set<Node>> inputs) {
     return inputs.stream()
             .filter(Objects::nonNull)

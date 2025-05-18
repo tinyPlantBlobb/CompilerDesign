@@ -45,7 +45,7 @@ public class x86CodeGenerator {
                 registerfile.write(graph.name()+":\n");
                 registerfile.write(registers.keySet().stream()
                         .map(key -> key + "=" + registers.get(key))
-                        .collect(Collectors.joining(", ", "{", "}")));
+                        .collect(Collectors.joining(", ", "{", "}\n ")));
                 file.close();
                 registerfile.close();
             } catch (IOException e) {
@@ -79,7 +79,7 @@ public class x86CodeGenerator {
                 "syscall\n\n";
     }
     public  String generatePrologue(String name){
-        return ".global"+ name+ "\n"+ name+":\n";
+        return ".global "+ name+ "\n"+ name+":\n";
     }
 
     private void generateForGraph(IrGraph graph, StringBuilder builder, Map<Node, Register> registers) {
