@@ -107,12 +107,12 @@ public class x86CodeGenerator {
                 case DivNode div -> {
                     builder.append("mov ").append(x86Registers.RealRegisters.EAX).append(", ")
                             .append(registers.get(predecessorSkipProj(div, BinaryOperationNode.LEFT))).append("\n");
-                    builder.append("cqo\n"); // Sign extension for division
+                    builder.append("cdq\n");
                     builder.append("idiv ").append(registers.get(predecessorSkipProj(div, BinaryOperationNode.RIGHT))).append("\n");
                 }
                 case ModNode mod -> builder.append("mov ").append(x86Registers.RealRegisters.EAX).append(", ")
                         .append(registers.get(predecessorSkipProj(mod, BinaryOperationNode.LEFT))).append("\n")
-                        .append("cqo\n")
+                        .append("cdq\n")
                         .append("idiv ").append(registers.get(predecessorSkipProj(mod, BinaryOperationNode.RIGHT))).append("\n")
                         .append("mov ").append(registers.get(mod)).append(", ").append(x86Registers.RealRegisters.EDX).append("\n");
                 case ReturnNode r -> builder.repeat(" ", 2)

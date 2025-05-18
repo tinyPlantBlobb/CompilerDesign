@@ -30,6 +30,8 @@ public class ConstantFolding implements Optimizer {
                     case MulNode _ -> result =  leftValue * rightValue;
                     case DivNode _ -> {
                         if (((ConstIntNode) right).value() == 0) {
+                            return new DivNode(node.block(), left, right, predecessorSkipProj(binaryOperationNode, DivNode.SIDE_EFFECT));
+                        } else if (leftValue== Integer.MIN_VALUE && rightValue==-1) {
                             return node;
                         } else {
                             result =  leftValue / rightValue;
@@ -37,7 +39,7 @@ public class ConstantFolding implements Optimizer {
                     }
                     case ModNode _ -> {
                         if (rightValue == 0) {
-                            return node;
+                            return new ModNode(node.block(), left, right, predecessorSkipProj(binaryOperationNode, ModNode.SIDE_EFFECT));
                         } else if (leftValue== Integer.MIN_VALUE&&rightValue==-1) {
                             return node;
                         } else {
