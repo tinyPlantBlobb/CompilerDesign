@@ -18,7 +18,8 @@ public class x86RegisterAllocator implements RegisterAllocator {
     public x86RegisterAllocator(IrGraph graph) {
         // Initialize the available registers
         for (x86Registers.RealRegisters reg : x86Registers.RealRegisters.values()) {
-            if (reg != x86Registers.RealRegisters.RSP && reg != x86Registers.RealRegisters.RBP&&reg!=x86Registers.RealRegisters.RAX&&reg!=x86Registers.RealRegisters.RDX&&reg!=x86Registers.RealRegisters.R15) { // Stack- und Frame-Pointer auslassen
+            if (reg != x86Registers.RealRegisters.RSP && reg != x86Registers.RealRegisters.RBP&&reg
+                    !=x86Registers.RealRegisters.EAX&&reg!=x86Registers.RealRegisters.EDX&&reg!=x86Registers.RealRegisters.R15) { // Stack- und Frame-Pointer auslassen
                 availableRegisters.add(reg);
             }
 

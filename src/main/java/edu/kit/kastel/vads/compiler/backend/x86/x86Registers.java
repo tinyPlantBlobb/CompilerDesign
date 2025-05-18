@@ -5,12 +5,12 @@ import edu.kit.kastel.vads.compiler.backend.regalloc.Register;
 public sealed interface x86Registers extends Register permits x86Registers.RealRegisters, x86Registers.OverflowRegisters {
   enum RealRegisters implements x86Registers {
 
-    RAX,
-    RBX,
-    RCX,
-    RDX,
-    RSI,
-    RDI,
+    EAX,
+    EBX,
+    ECX,
+    EDX,
+    ESI,
+    EDI,
     RSP,
     RBP,
     R8,
