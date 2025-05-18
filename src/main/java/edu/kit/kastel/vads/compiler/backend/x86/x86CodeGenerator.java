@@ -132,6 +132,7 @@ public class x86CodeGenerator {
 
         builder.append("\n");
     }
+
   private static void binary(
       StringBuilder builder,
       Map<Node, Register> registers,

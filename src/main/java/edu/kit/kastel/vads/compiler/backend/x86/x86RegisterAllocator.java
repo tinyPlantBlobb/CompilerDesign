@@ -6,7 +6,6 @@ import edu.kit.kastel.vads.compiler.backend.regalloc.RegisterAllocator;
 import edu.kit.kastel.vads.compiler.ir.IrGraph;
 import edu.kit.kastel.vads.compiler.ir.node.*;
 
-
 import java.util.*;
 
 public class x86RegisterAllocator implements RegisterAllocator {
@@ -22,6 +21,7 @@ public class x86RegisterAllocator implements RegisterAllocator {
                     !=x86Registers.RealRegisters.EAX&&reg!=x86Registers.RealRegisters.EDX&&reg!=x86Registers.RealRegisters.R15D) { // Stack- und Frame-Pointer auslassen
                 availableRegisters.add(reg);
             }
+
         }
         this.analysis = new LivenessAnalysis();
         this.analysis.analyzeLiveness(graph);
