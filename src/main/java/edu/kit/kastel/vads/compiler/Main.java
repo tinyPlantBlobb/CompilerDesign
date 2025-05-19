@@ -36,6 +36,10 @@ public class Main {
       System.exit(7);
 
       return;
+    } catch (ParseException e) {
+        e.printStackTrace();
+        System.exit(42);
+        return;
     }
     List<IrGraph> graphs = new ArrayList<>();
     for (FunctionTree function : program.topLevelTrees()) {
@@ -54,9 +58,9 @@ public class Main {
     // assembly
     String s = new x86CodeGenerator().generateCode(graphs);
     Path assemblyFilePath = Path.of(output+".s");
-    System.out.println("aaaa");
+
     Files.writeString(assemblyFilePath, s);
-    System.out.println("Assembly code generated at: " + assemblyFilePath);
+
  //Build and start gcc process
     ProcessBuilder builder = new ProcessBuilder(
             "gcc",
