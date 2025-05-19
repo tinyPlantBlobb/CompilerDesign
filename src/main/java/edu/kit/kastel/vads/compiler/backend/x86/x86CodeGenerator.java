@@ -103,7 +103,7 @@ public class x86CodeGenerator {
             switch (node) {
                 case AddNode add -> binary(builder, registers, add, "add");
                 case SubNode sub -> subtract(builder, registers, sub, "sub");
-                case MulNode mul -> binary(builder, registers, mul, "mul");
+                case MulNode mul -> binary(builder, registers, mul, "imul");
                 case DivNode div -> {
                     builder.append("mov ").append(x86Registers.RealRegisters.EAX).append(", ")
                             .append(registers.get(predecessorSkipProj(div, BinaryOperationNode.LEFT))).append("\n");
