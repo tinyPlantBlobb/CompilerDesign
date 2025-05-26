@@ -14,6 +14,8 @@ import edu.kit.kastel.vads.compiler.parser.ast.ProgramTree;
 import edu.kit.kastel.vads.compiler.parser.ast.ReturnTree;
 import edu.kit.kastel.vads.compiler.parser.ast.TypeTree;
 
+
+
 /// A visitor that does nothing and returns [Unit#INSTANCE] by default.
 /// This can be used to implement operations only for specific tree types.
 public interface NoOpVisitor<T> extends Visitor<T, Unit> {
@@ -82,4 +84,5 @@ public interface NoOpVisitor<T> extends Visitor<T, Unit> {
     default Unit visit(TypeTree typeTree, T data) {
         return Unit.INSTANCE;
     }
+
 }
