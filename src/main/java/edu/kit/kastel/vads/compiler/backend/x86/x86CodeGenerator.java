@@ -1,19 +1,7 @@
 package edu.kit.kastel.vads.compiler.backend.x86;
 import edu.kit.kastel.vads.compiler.backend.regalloc.Register;
 import edu.kit.kastel.vads.compiler.ir.IrGraph;
-import edu.kit.kastel.vads.compiler.ir.node.AddNode;
-import edu.kit.kastel.vads.compiler.ir.node.BinaryOperationNode;
-import edu.kit.kastel.vads.compiler.ir.node.Block;
-import edu.kit.kastel.vads.compiler.ir.node.ConstIntNode;
-import edu.kit.kastel.vads.compiler.ir.node.DivNode;
-import edu.kit.kastel.vads.compiler.ir.node.ModNode;
-import edu.kit.kastel.vads.compiler.ir.node.MulNode;
-import edu.kit.kastel.vads.compiler.ir.node.Node;
-import edu.kit.kastel.vads.compiler.ir.node.Phi;
-import edu.kit.kastel.vads.compiler.ir.node.ProjNode;
-import edu.kit.kastel.vads.compiler.ir.node.ReturnNode;
-import edu.kit.kastel.vads.compiler.ir.node.StartNode;
-import edu.kit.kastel.vads.compiler.ir.node.SubNode;
+import edu.kit.kastel.vads.compiler.ir.node.*;
 
 import java.io.FileWriter;
 import java.io.IOException;
@@ -122,6 +110,7 @@ public class x86CodeGenerator {
                         .append(System.lineSeparator())
                         .append("  ret\n");
                 case ConstIntNode c -> builder.append("mov ").append(registers.get(c)).append(", ").append(c.value()).append("\n");
+                case ConstBoolNode c -> builder.append("mov ").append(registers.get(c)).append(", ").append(c.value() ? 1 : 0).append("\n");
                 case Phi _ -> throw new UnsupportedOperationException("phi");
                 case Block _, ProjNode _, StartNode _ -> {
                     // do nothing, skip line break

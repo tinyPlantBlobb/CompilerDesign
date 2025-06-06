@@ -7,21 +7,7 @@ import edu.kit.kastel.vads.compiler.ir.node.Node;
 import edu.kit.kastel.vads.compiler.ir.optimize.Optimizer;
 import edu.kit.kastel.vads.compiler.ir.util.DebugInfo;
 import edu.kit.kastel.vads.compiler.ir.util.DebugInfoHelper;
-import edu.kit.kastel.vads.compiler.parser.ast.AssignmentTree;
-import edu.kit.kastel.vads.compiler.parser.ast.BinaryOperationTree;
-import edu.kit.kastel.vads.compiler.parser.ast.BlockTree;
-import edu.kit.kastel.vads.compiler.parser.ast.DeclarationTree;
-import edu.kit.kastel.vads.compiler.parser.ast.FunctionTree;
-import edu.kit.kastel.vads.compiler.parser.ast.IdentExpressionTree;
-import edu.kit.kastel.vads.compiler.parser.ast.LValueIdentTree;
-import edu.kit.kastel.vads.compiler.parser.ast.LiteralTree;
-import edu.kit.kastel.vads.compiler.parser.ast.NameTree;
-import edu.kit.kastel.vads.compiler.parser.ast.NegateTree;
-import edu.kit.kastel.vads.compiler.parser.ast.ProgramTree;
-import edu.kit.kastel.vads.compiler.parser.ast.ReturnTree;
-import edu.kit.kastel.vads.compiler.parser.ast.StatementTree;
-import edu.kit.kastel.vads.compiler.parser.ast.Tree;
-import edu.kit.kastel.vads.compiler.parser.ast.TypeTree;
+import edu.kit.kastel.vads.compiler.parser.ast.*;
 import edu.kit.kastel.vads.compiler.parser.symbol.Name;
 import edu.kit.kastel.vads.compiler.parser.visitor.Visitor;
 
@@ -169,12 +155,20 @@ public class SsaTranslation {
     }
 
     @Override
-    public Optional<Node> visit(LiteralTree literalTree, SsaTranslation data) {
+    public Optional<Node> visit(LiteralIntTree literalTree, SsaTranslation data) {
       pushSpan(literalTree);
       Node node = data.constructor.newConstInt((int) literalTree.parseValue().orElseThrow());
       popSpan();
       return Optional.of(node);
     }
+
+    @Override
+    public Optional<Node> visit(LiteralBoolTree literalTree, SsaTranslation data) {
+      pushSpan(literalTree);
+      Node node = data.constructor.newConstBool(literalTree.parseValue());
+      return Optional.empty();
+    }
+
 
     @Override
     public Optional<Node> visit(LValueIdentTree lValueIdentTree, SsaTranslation data) {
