@@ -29,6 +29,7 @@ import edu.kit.kastel.vads.compiler.parser.ast.TypeTree;
 import edu.kit.kastel.vads.compiler.parser.symbol.Name;
 import edu.kit.kastel.vads.compiler.parser.type.BasicType;
 
+import java.security.Key;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -84,14 +85,29 @@ public class Parser {
     }
 
     private StatementTree parseDeclaration() {
-        Keyword type = this.tokenSource.expectKeyword(KeywordType.INT);
-        Identifier ident = this.tokenSource.expectIdentifier();
-        ExpressionTree expr = null;
-        if (this.tokenSource.peek().isOperator(OperatorType.ASSIGN)) {
-            this.tokenSource.expectOperator(OperatorType.ASSIGN);
-            expr = parseExpression();
+        if(this.tokenSource.peek().isKeyword(KeywordType.INT)) {
+            Keyword type = this.tokenSource.expectKeyword(KeywordType.INT);
+            Identifier ident = this.tokenSource.expectIdentifier();
+            ExpressionTree expr = null;
+            if (this.tokenSource.peek().isOperator(OperatorType.ASSIGN)) {
+                this.tokenSource.expectOperator(OperatorType.ASSIGN);
+                expr = parseExpression();
+            }
+            return new DeclarationTree(new TypeTree(BasicType.INT, type.span()), name(ident), expr);
+        } else if (this.tokenSource.peek().isKeyword(KeywordType.BOOL)) {
+            Keyword type = this.tokenSource.expectKeyword(KeywordType.BOOL);
+            Identifier ident = this.tokenSource.expectIdentifier();
+            ExpressionTree expr = null;
+            if (this.tokenSource.peek().isOperator(OperatorType.ASSIGN)) {
+                this.tokenSource.expectOperator(OperatorType.ASSIGN);
+                expr = parseExpression();
+            }
+            return new DeclarationTree(new TypeTree(BasicType.BOOL, type.span()), name(ident), expr);
+
         }
-        return new DeclarationTree(new TypeTree(BasicType.INT, type.span()), name(ident), expr);
+        else {
+            throw new ParseException("expected declaration but got " + this.tokenSource.peek());
+        }
     }
 
     private StatementTree parseSimple() {
