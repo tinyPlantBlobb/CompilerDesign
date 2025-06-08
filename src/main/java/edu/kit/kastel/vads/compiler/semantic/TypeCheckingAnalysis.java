@@ -1,0 +1,56 @@
+package edu.kit.kastel.vads.compiler.semantic;
+
+import edu.kit.kastel.vads.compiler.parser.ast.*;
+import edu.kit.kastel.vads.compiler.parser.type.Type;
+import edu.kit.kastel.vads.compiler.parser.visitor.NoOpVisitor;
+import edu.kit.kastel.vads.compiler.parser.visitor.Unit;
+
+import java.util.List;
+//TODO: Implement type checking logic for the various AST nodes.
+public class TypeCheckingAnalysis implements NoOpVisitor<List<ReturnTree>> {
+
+
+    @Override
+    public Unit visit(FunctionTree functionTree, List<ReturnTree> data) {
+        // Check function parameters and return type
+        for (ReturnTree returnTree : data) {
+            if (!(returnTree.expression().type).equals(functionTree.returnType().type()) ){
+                throw new SemanticException("Function " + functionTree.name() + " does not have a return statement.");
+            }
+        }
+        return NoOpVisitor.super.visit(functionTree, data);
+    }
+
+    @Override
+    public Unit visit(ReturnTree returnTree, List<ReturnTree> data) {
+        // Check return statements
+        data.add(returnTree);
+        return NoOpVisitor.super.visit(returnTree, data);
+    }
+    @Override
+    public Unit visit(DeclarationTree declarationTree, List<ReturnTree> data) {
+        // Check variable declarations
+        if (declarationTree.initializer() != null) {
+            if (!declarationTree.type().type().equals(declarationTree.initializer().type)) {
+                throw new SemanticException("Type mismatch in variable declaration: " + declarationTree.name());
+            }
+        }
+        return NoOpVisitor.super.visit(declarationTree, data);
+    }
+
+    @Override
+    public Unit visit(BinaryOperationTree binaryOperationTree, List<ReturnTree> data) {
+        // Check binary operations
+        Type lhsType = binaryOperationTree.lhs().type;
+        Type rhsType = binaryOperationTree.rhs().type;
+        Type inputType = binaryOperationTree.operatorType().inputType();
+        if (inputType!=null) {
+            if (!lhsType.equals(inputType) || !rhsType.equals(inputType)) {
+                throw new SemanticException("Type mismatch in binary operation: " + binaryOperationTree);
+            }
+        }
+        return NoOpVisitor.super.visit(binaryOperationTree, data);
+    }
+
+    // Additional visit methods for other AST nodes can be added here.
+}
