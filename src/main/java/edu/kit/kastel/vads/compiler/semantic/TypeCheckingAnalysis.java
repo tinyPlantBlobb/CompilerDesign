@@ -1,5 +1,6 @@
 package edu.kit.kastel.vads.compiler.semantic;
 
+import edu.kit.kastel.vads.compiler.lexer.Operator;
 import edu.kit.kastel.vads.compiler.parser.ast.*;
 import edu.kit.kastel.vads.compiler.parser.type.Type;
 import edu.kit.kastel.vads.compiler.parser.visitor.NoOpVisitor;
@@ -52,5 +53,22 @@ public class TypeCheckingAnalysis implements NoOpVisitor<List<ReturnTree>> {
         return NoOpVisitor.super.visit(binaryOperationTree, data);
     }
 
+
+    @Override
+    public Unit visit(AssignmentTree assignmentTree, List<ReturnTree> data) {
+        // Check assignments
+        Type lValueType = ((LValueIdentTree)assignmentTree.lValue()).name().references.type().type();
+        Operator.OperatorType opType = assignmentTree.operator().type();
+        Type expressionType = assignmentTree.expression().type;
+        if (!lValueType.equals(expressionType)) {
+            throw new SemanticException("Type mismatch in assignment: " + assignmentTree);
+        }
+        if (opType != Operator.OperatorType.ASSIGN) {
+            if(opType.inputType().equals(lValueType)) {
+                throw new SemanticException("Type mismatch for operator"+ opType +" and value " + lValueType);
+            }
+        }
+        return NoOpVisitor.super.visit(assignmentTree, data);
+    }
     // Additional visit methods for other AST nodes can be added here.
 }
