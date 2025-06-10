@@ -9,8 +9,6 @@ import edu.kit.kastel.vads.compiler.parser.visitor.Unit;
 import java.util.List;
 //TODO: Implement type checking logic for the various AST nodes.
 public class TypeCheckingAnalysis implements NoOpVisitor<List<ReturnTree>> {
-
-
     @Override
     public Unit visit(FunctionTree functionTree, List<ReturnTree> data) {
         // Check function parameters and return type
@@ -32,8 +30,9 @@ public class TypeCheckingAnalysis implements NoOpVisitor<List<ReturnTree>> {
     public Unit visit(DeclarationTree declarationTree, List<ReturnTree> data) {
         // Check variable declarations
         if (declarationTree.initializer() != null) {
-            if (!declarationTree.type().type().equals(declarationTree.initializer().type)) {
-                throw new SemanticException("Type mismatch in variable declaration: " + declarationTree.name());
+            if (!declarationTree.type().equals(declarationTree.initializer().type)) {
+                throw new SemanticException("Type mismatch in variable declaration: " + declarationTree.name()+
+                        " expected " + declarationTree.type() + " but got " + declarationTree.initializer().type);
             }
         }
         return NoOpVisitor.super.visit(declarationTree, data);
@@ -57,7 +56,7 @@ public class TypeCheckingAnalysis implements NoOpVisitor<List<ReturnTree>> {
     @Override
     public Unit visit(AssignmentTree assignmentTree, List<ReturnTree> data) {
         // Check assignments
-        Type lValueType = ((LValueIdentTree)assignmentTree.lValue()).name().references.type().type();
+        Type lValueType = ((LValueIdentTree)assignmentTree.lValue()).name().references.type();
         Operator.OperatorType opType = assignmentTree.operator().type();
         Type expressionType = assignmentTree.expression().type;
         if (!lValueType.equals(expressionType)) {

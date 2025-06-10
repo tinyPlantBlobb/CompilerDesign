@@ -2,13 +2,14 @@ package edu.kit.kastel.vads.compiler.parser.ast;
 
 import edu.kit.kastel.vads.compiler.Span;
 import edu.kit.kastel.vads.compiler.parser.type.BasicType;
+import edu.kit.kastel.vads.compiler.parser.type.Type;
 import edu.kit.kastel.vads.compiler.parser.visitor.Visitor;
 
 import java.util.OptionalLong;
 
 public record LiteralIntTree(String value, int base, Span span) implements LiteralTree<OptionalLong> {
 
-    private static final BasicType type = BasicType.INT;
+    private static final Type type = BasicType.INT;
 
 
     @Override
@@ -33,7 +34,7 @@ public record LiteralIntTree(String value, int base, Span span) implements Liter
       return OptionalLong.of(l);
     }
 
-    public BasicType getType() {
+    public Type getType() {
       return type;
     }
 

@@ -129,6 +129,7 @@ public class SsaTranslation {
     public Optional<Node> visit(DeclarationTree declarationTree, SsaTranslation data) {
       pushSpan(declarationTree);
       if (declarationTree.initializer() != null) {
+        System.out.println(declarationTree.initializer().accept(this, data));
         Node rhs = declarationTree.initializer().accept(this, data).orElseThrow();
         data.writeVariable(declarationTree.name().name(), data.currentBlock(), rhs);
       }
