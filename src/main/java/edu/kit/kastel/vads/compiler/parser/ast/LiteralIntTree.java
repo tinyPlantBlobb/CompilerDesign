@@ -9,9 +9,6 @@ import java.util.OptionalLong;
 
 public record LiteralIntTree(String value, int base, Span span) implements LiteralTree<OptionalLong> {
 
-    private static final Type type = BasicType.INT;
-
-
     @Override
     public OptionalLong parseValue() {
       int begin = 0;
@@ -34,8 +31,9 @@ public record LiteralIntTree(String value, int base, Span span) implements Liter
       return OptionalLong.of(l);
     }
 
-    public Type getType() {
-      return type;
+    @Override
+    public Type type() {
+      return BasicType.INT;
     }
 
     @Override

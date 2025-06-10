@@ -6,6 +6,12 @@ import edu.kit.kastel.vads.compiler.parser.visitor.Visitor;
 
 public record IdentExpressionTree(NameTree name) implements ExpressionTree {
     @Override
+    public Type type() {
+        System.out.println("IdentExpressionTree: " + name+".type() = " + name.references.type());
+        return name.references.type();
+    }
+
+    @Override
     public Span span() {
         return name().span();
     }
@@ -14,7 +20,5 @@ public record IdentExpressionTree(NameTree name) implements ExpressionTree {
     public <T, R> R accept(Visitor<T, R> visitor, T data) {
         return visitor.visit(this, data);
     }
-
-    static final Type type= name.references.typetree().type();
 
 }

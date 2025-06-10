@@ -62,6 +62,9 @@ class VariableStatusAnalysis implements NoOpVisitor<Namespace<VariableStatusAnal
         VariableStatus status = declarationTree.initializer() == null
             ? VariableStatus.DECLARED
             : VariableStatus.INITIALIZED;
+        if (status==VariableStatus.INITIALIZED) {
+            declarationTree.name().addReference(declarationTree);
+        }
         updateStatus(data, status, declarationTree.name());
         return NoOpVisitor.super.visit(declarationTree, data);
     }
