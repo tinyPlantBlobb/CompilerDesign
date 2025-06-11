@@ -99,6 +99,48 @@ public class Printer {
             }
             case LValueIdentTree(var name) -> printTree(name);
             case IdentExpressionTree(var name) -> printTree(name);
+            case BreakTree breakTree -> {
+            }
+            case ContinueTree continueTree -> {
+                print("continue");
+                semicolon();
+            }
+            case ForTree forTree -> {
+                print("for (");
+                if (forTree.initialisation() != null) {
+                    printTree(forTree.initialisation());
+                }
+                print("; ");
+                if (forTree.condition() != null) {
+                    printTree(forTree.condition());
+                }
+                print("; ");
+                if (forTree.step() != null) {
+                    printTree(forTree.step());
+                }
+                print(") ");
+                printTree(forTree.loopBody());
+            }
+            case IfTree ifTree -> {
+                print("if (");
+                printTree(ifTree.condition());
+                print(") ");
+                printTree(ifTree.thenTree());
+                if (ifTree.elseTree() != null) {
+                    print(" else ");
+                    printTree(ifTree.elseTree());
+            }
+            }
+            case WhileTree whileTree -> {
+                print("while (");
+                printTree(whileTree.condition());
+                print(") ");
+                printTree(whileTree.loopBody());
+            }
+            default -> {
+                throw new IllegalArgumentException("Unknown tree type: " + tree.getClass().getSimpleName());
+            }
+
         }
     }
 

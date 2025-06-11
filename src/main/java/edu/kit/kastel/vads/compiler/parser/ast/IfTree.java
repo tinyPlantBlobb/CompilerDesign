@@ -4,11 +4,18 @@ import edu.kit.kastel.vads.compiler.Position;
 import edu.kit.kastel.vads.compiler.Span;
 import edu.kit.kastel.vads.compiler.parser.visitor.Visitor;
 
-public record ReturnTree(ExpressionTree expression, Position start) implements ControlFlowTree {
+public record IfTree(ExpressionTree condition, StatementTree thenTree, StatementTree elseTree, Position spanStart) implements ControlFlowTree {
+
+
+
     @Override
     public Span span() {
-        return new Span.SimpleSpan(start(), expression().span().end());
-    }
+        if (elseTree == null) {
+            return condition.span().merge(thenTree.span());
+        }else {
+        return condition.span().merge(thenTree.span())
+                .merge( elseTree.span());
+    }}
 
     @Override
     public <T, R> R accept(Visitor<T, R> visitor, T data) {

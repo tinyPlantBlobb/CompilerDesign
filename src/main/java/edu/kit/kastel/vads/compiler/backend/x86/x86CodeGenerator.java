@@ -115,6 +115,29 @@ public class x86CodeGenerator {
                 case Block _, ProjNode _, StartNode _ -> {
                     // do nothing, skip line break
                 }
+                case ArithmeticShiftLeftNode arithmeticShiftLeftNode -> {
+                }
+                case ArithmeticShiftRightNode arithmeticShiftRightNode -> {
+                }
+                case BitwiseAndNode bitwiseAndNode -> {
+                }
+                case BitwiseOrNode bitwiseOrNode -> {
+                }
+                case LogicalAndNode logicalAndNode -> {
+                }
+                case LogicalOrNode logicalOrNode -> {
+                }
+                case LogicalShiftLeftNode logicalShiftLeftNode -> {
+                }
+                case LogicalShiftRightNode logicalShiftRightNode -> {
+                }
+                case XorNode xorNode -> {
+                }
+                default -> {
+                    builder.append("errror : not implemented node type: ")
+                        .append(node.getClass().getSimpleName())
+                        .append("\n");
+            }
             }
 
         }

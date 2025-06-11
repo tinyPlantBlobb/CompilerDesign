@@ -60,6 +60,7 @@ public class CodeGenerator {
                 // do nothing, skip line break
                 return;
             }
+            default -> builder.append("unknown node");
         }
         builder.append("\n");
     }

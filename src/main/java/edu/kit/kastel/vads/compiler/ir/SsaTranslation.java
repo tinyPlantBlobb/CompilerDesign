@@ -210,6 +210,34 @@ public class SsaTranslation {
       throw new UnsupportedOperationException();
     }
 
+    @Override
+    public Optional<Node> visit(IfTree ifTree, SsaTranslation data) {
+        pushSpan(ifTree);
+        Node condition = ifTree.condition().accept(this, data).orElseThrow();
+        // TODO: handle  branches
+        return NOT_AN_EXPRESSION;
+    }
+
+    @Override
+    public Optional<Node> visit(WhileTree whileTree, SsaTranslation data) {
+      return Optional.empty();
+    }
+
+    @Override
+    public Optional<Node> visit(ForTree forTree, SsaTranslation data) {
+      return Optional.empty();
+    }
+
+    @Override
+    public Optional<Node> visit(BreakTree breakTree, SsaTranslation data) {
+      return Optional.empty();
+    }
+
+    @Override
+    public Optional<Node> visit(ContinueTree continueTree, SsaTranslation data) {
+      return Optional.empty();
+    }
+
     private Node projResultDivMod(SsaTranslation data, Node divMod) {
       // make sure we actually have a div or a mod, as optimizations could
       // have changed it to something else already

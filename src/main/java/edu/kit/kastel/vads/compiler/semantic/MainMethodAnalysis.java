@@ -1,7 +1,7 @@
 package edu.kit.kastel.vads.compiler.semantic;
 
 import edu.kit.kastel.vads.compiler.parser.ParseException;
-import edu.kit.kastel.vads.compiler.parser.ast.ProgramTree;
+import edu.kit.kastel.vads.compiler.parser.ast.*;
 import edu.kit.kastel.vads.compiler.parser.visitor.NoOpVisitor;
 import edu.kit.kastel.vads.compiler.parser.visitor.Unit;
 

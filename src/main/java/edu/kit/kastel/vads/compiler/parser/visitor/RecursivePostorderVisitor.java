@@ -120,6 +120,47 @@ public class RecursivePostorderVisitor<T, R> implements Visitor<T, R> {
         return this.visitor.visit(typeTree, data);
     }
 
+    @Override
+    public R visit(IfTree ifTree, T data) {
+        R r = ifTree.condition().accept(this, data);
+        r = ifTree.thenTree().accept(this, accumulate(data, r));
+        if (ifTree.elseTree() != null) {
+            r = ifTree.elseTree().accept(this, accumulate(data, r));
+        }
+        r = this.visitor.visit(ifTree, accumulate(data, r));
+        return r;
+    }
+
+    @Override
+    public R visit(WhileTree whileTree, T data) {
+        R r = whileTree.condition().accept(this, data);
+        r = whileTree.loopBody().accept(this, accumulate(data, r));
+        r = this.visitor.visit(whileTree, accumulate(data, r));
+        return r;
+    }
+
+    @Override
+    public R visit(ForTree forTree, T data) {
+        R r = forTree.initialisation().accept(this, data);
+        r = forTree.condition().accept(this, accumulate(data, r));
+        r = forTree.step().accept(this, accumulate(data, r));
+        r = forTree.loopBody().accept(this, accumulate(data, r));
+        r = this.visitor.visit(forTree, accumulate(data, r));
+        return r;
+    }
+
+    @Override
+    public R visit(BreakTree breakTree, T data) {
+        R r = this.visitor.visit(breakTree, data);
+        return r;
+    }
+
+    @Override
+    public R visit(ContinueTree continueTree, T data) {
+        R r = this.visitor.visit(continueTree, data);
+        return r;
+    }
+
     protected T accumulate(T data, R value) {
         return data;
     }
