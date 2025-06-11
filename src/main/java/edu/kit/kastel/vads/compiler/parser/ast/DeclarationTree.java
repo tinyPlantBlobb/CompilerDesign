@@ -7,8 +7,6 @@ import org.jspecify.annotations.Nullable;
 
 public record DeclarationTree(TypeTree typetree, NameTree name, @Nullable ExpressionTree initializer) implements StatementTree {
     public Type type() {
-        System.out.println("DeclarationTree "+name+": " + typetree + ".type() = " + typetree.type());
-
         return typetree.type();
     }
 

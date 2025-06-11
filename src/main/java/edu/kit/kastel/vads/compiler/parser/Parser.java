@@ -63,7 +63,6 @@ public class Parser {
     }
     private TypeTree parseType() {
 
-        System.out.println("Parsing type: " + this.tokenSource.peek());
         Keyword type = this.tokenSource.expectAnyKeyword(this.types);
 
         BasicType basicType = null;
@@ -79,18 +78,17 @@ public class Parser {
         return new TypeTree(basicType, type.span());
     }
     private StatementTree parseDeclaration() {
-        System.out.println("Parsing declaration: " + this.tokenSource.peek());
         TypeTree typetree = parseType();
         Identifier ident = this.tokenSource.expectIdentifier();
-        System.out.println("Parsing identifier: " + ident);
         ExpressionTree expr = null;
         if (this.tokenSource.peek().isOperator(OperatorType.ASSIGN)) {
-            System.out.println("Parsing operator: " + this.tokenSource.peek());
                 this.tokenSource.expectOperator(OperatorType.ASSIGN);
-                System.out.println("Parsing expr: " + this.tokenSource.peek());
                 expr = parseExpression();
         }
-        return new DeclarationTree(typetree, name(ident), expr);
+        NameTree name = name(ident);
+        DeclarationTree declarationTree = new DeclarationTree(typetree, name, expr);
+        name.addReference(declarationTree);
+        return declarationTree;
 
     }
 

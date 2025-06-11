@@ -7,7 +7,9 @@ import edu.kit.kastel.vads.compiler.parser.visitor.Visitor;
 public record IdentExpressionTree(NameTree name) implements ExpressionTree {
     @Override
     public Type type() {
-        System.out.println("IdentExpressionTree: " + name+".type() = " + name.references.type());
+
+        System.out.println("IdentExpressionTree: " + name+".type() = " + name.references.type()+
+                ", name = " + name.references);;
         return name.references.type();
     }
 

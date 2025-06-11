@@ -1,6 +1,7 @@
 package edu.kit.kastel.vads.compiler.semantic;
 
 import edu.kit.kastel.vads.compiler.lexer.Operator;
+import edu.kit.kastel.vads.compiler.parser.Printer;
 import edu.kit.kastel.vads.compiler.parser.ast.*;
 import edu.kit.kastel.vads.compiler.parser.type.Type;
 import edu.kit.kastel.vads.compiler.parser.visitor.NoOpVisitor;
@@ -16,7 +17,7 @@ public class TypeCheckingAnalysis implements NoOpVisitor<List<ReturnTree>> {
             //System.out.println(returnTree);
             //System.out.println(returnTree.expression());
             //System.out.println(returnTree.expression().type());
-            //System.out.println(functionTree.returnType());
+            System.out.println(functionTree);
             if (!(returnTree.expression().type()).equals(functionTree.returnType().type()) ){
                 throw new SemanticException("Function " + functionTree.name() + " does not return the expected type: " +
                         functionTree.returnType().type() + ", but got " + returnTree.expression().type());

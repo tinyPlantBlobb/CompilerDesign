@@ -15,9 +15,11 @@ public record NameTree(Name name, Span span) implements Tree {
     public static DeclarationTree references = null;
 
     public void addReference(DeclarationTree declaration) {
+        System.out.println("Adding reference to " + declaration.name().name());
         if (declaration == null) {
             throw new IllegalArgumentException("references cannot be null");
         }
-        references = declaration;
+        if (references == null) {references = declaration;}
+
     }
 }
