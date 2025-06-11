@@ -74,7 +74,47 @@ class GraphConstructor {
         // and resultingly in better value numbering
         return this.optimizer.transform(new ConstBoolNode(this.graph.startBlock(), value));
     }
+    public Node newAnd(Node left, Node right) {
+        return this.optimizer.transform(new LogicalAndNode(currentBlock(), left, right));
+    }
+    public Node newGreaterThanOrEqual(Node left, Node right) {
+        return this.optimizer.transform(new LessThanOrEqualNode(currentBlock(),right,left));
+    }
+    public Node newLessThanOrEqual(Node left, Node right) {
+        return this.optimizer.transform(new LessThanOrEqualNode(currentBlock(), left, right));
+    }
 
+    public Node newLessThan(Node left, Node right) {
+        return this.optimizer.transform(new LessThanNode(currentBlock(), left, right));
+    }
+    public Node newEq(Node left, Node right, int size) {
+        return this.optimizer.transform(new EqualNode(currentBlock(), left, right, size));
+    }
+    public Node newNotEqual(Node left, Node right) {
+        return this.optimizer.transform(new NotEqualNode(currentBlock(), left, right));
+    }
+    public Node newJump(Block target) {
+        return this.optimizer.transform(new JumpNode(currentBlock(), target));
+    }
+    public Node newOr(Node left, Node right) {
+        return this.optimizer.transform(new LogicalOrNode(currentBlock(), left, right));
+    }
+    public Node newXor(Node left, Node right) {
+        return this.optimizer.transform(new XorNode(currentBlock(), left, right));
+    }
+    public Node newLeftShift(Node left, Node right) {
+        return this.optimizer.transform(new ArithmeticShiftLeftNode(currentBlock(), left, right));
+    }
+public Node newRightShift(Node left, Node right) {
+        return this.optimizer.transform(new ArithmeticShiftRightNode(currentBlock(), left, right));
+    }
+    public Node newLogicalAnd(Node lhs, Node rhs) {
+        return this.optimizer.transform(new LogicalAndNode(currentBlock(), lhs, rhs));
+    }
+
+    public Node newLogicalOr(Node lhs, Node rhs) {
+        return this.optimizer.transform(new LogicalOrNode(currentBlock(), lhs, rhs));
+    }
     public Block currentBlock() {
         return this.currentBlock;
     }
@@ -186,5 +226,6 @@ class GraphConstructor {
         }
         return tryRemoveTrivialPhi(phi);
     }
+
 
 }

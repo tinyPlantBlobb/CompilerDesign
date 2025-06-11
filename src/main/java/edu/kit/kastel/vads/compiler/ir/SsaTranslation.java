@@ -9,6 +9,7 @@ import edu.kit.kastel.vads.compiler.ir.util.DebugInfo;
 import edu.kit.kastel.vads.compiler.ir.util.DebugInfoHelper;
 import edu.kit.kastel.vads.compiler.parser.ast.*;
 import edu.kit.kastel.vads.compiler.parser.symbol.Name;
+import edu.kit.kastel.vads.compiler.parser.type.BasicType;
 import edu.kit.kastel.vads.compiler.parser.visitor.Visitor;
 
 import java.util.ArrayDeque;
@@ -75,6 +76,11 @@ public class SsaTranslation {
         case ASSIGN_MUL -> data.constructor::newMul;
         case ASSIGN_DIV -> (lhs, rhs) -> projResultDivMod(data, data.constructor.newDiv(lhs, rhs));
         case ASSIGN_MOD -> (lhs, rhs) -> projResultDivMod(data, data.constructor.newMod(lhs, rhs));
+        case ASSIGN_BITWISE_AND -> data.constructor::newAnd;
+        case ASSIGN_BITWISE_OR -> data.constructor::newOr;
+        case ASSIGN_BITWISE_XOR -> data.constructor::newXor;
+        case ASSIGN_LEFT_SHIFT -> data.constructor::newLeftShift;
+        case ASSIGN_RIGHT_SHIFT -> data.constructor::newRightShift;
         case ASSIGN -> null;
         default ->
           throw new IllegalArgumentException("not an assignment operator " + assignmentTree.operator());
@@ -108,20 +114,23 @@ public class SsaTranslation {
         case LEFT_SHIFT -> data.constructor.newLeftShift(lhs, rhs);
         case RIGHT_SHIFT -> data.constructor.newRightShift(lhs, rhs);
 
-        case AND -> data.constructor.newAnd(lhs, rhs);
-        case OR -> data.constructor.newOr(lhs, rhs);
-        case XOR -> data.constructor.newXor(lhs, rhs);
-
+        case LOGICAL_AND -> data.constructor.newLogicalAnd(lhs, rhs);
+        case LOGICAL_OR -> data.constructor.newLogicalOr(lhs, rhs);
+        case BITWISE_XOR -> data.constructor.newXor(lhs, rhs);
+        case BITWISE_AND -> data.constructor.newAnd(lhs, rhs);
+        case BITWISE_OR -> data.constructor.newOr(lhs, rhs);
         case LOGICAL_EQUAL -> {
-            int size = binaryOperationTree.operator().type() == Operator.OperatorType.LOGICAL_EQUAL
-                ? data.constructor.graph().getTypeSize(binaryOperationTree.lhs().type())
-                : 0;
-          data.constructor.newEq(lhs, rhs, size);
+            int size = 4;
+            if(binaryOperationTree.lhs().type().equals(BasicType.INT)){
+              size = 1;
+            }
+            yield data.constructor.newEq(lhs, rhs, size);
         }
-        case LESS_EQUAL -> data.constructor.newEq(lhs, rhs);
-        case GREATER_EQUAL -> data.constructor.newEq(rhs, lhs);
-        case LESS -> data.constructor.newLess(lhs, rhs);
-        case GREATER -> data.constructor.newLess(rhs, lhs);
+        case LOGICAL_NOT_EQUAL -> data.constructor.newNotEqual(lhs, rhs);
+        case LESS_EQUAL -> data.constructor.newLessThanOrEqual(lhs, rhs);
+        case GREATER_EQUAL -> data.constructor.newGreaterThanOrEqual(rhs, lhs);
+        case LESS_THAN -> data.constructor.newLessThan(lhs, rhs);
+        case GREATER_THAN -> data.constructor.newLessThan(rhs, lhs);
 
         default ->
           throw new IllegalArgumentException("not a binary expression operator " + binaryOperationTree.operatorType());

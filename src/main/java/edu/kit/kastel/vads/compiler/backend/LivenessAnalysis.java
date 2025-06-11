@@ -55,7 +55,7 @@ private final Map<Node, Set<Node>> liveNodes;
         }
         visited.add(node);
 
-        // Berechnung von liveOut
+        // calc liveOut
         Set<Node> liveOut = getLiveOut(node, successors(node).stream().map(liveNodes::get).collect(Collectors.toList()));
 
 
