@@ -104,6 +104,25 @@ public class SsaTranslation {
         case MUL -> data.constructor.newMul(lhs, rhs);
         case DIV -> projResultDivMod(data, data.constructor.newDiv(lhs, rhs));
         case MOD -> projResultDivMod(data, data.constructor.newMod(lhs, rhs));
+
+        case LEFT_SHIFT -> data.constructor.newLeftShift(lhs, rhs);
+        case RIGHT_SHIFT -> data.constructor.newRightShift(lhs, rhs);
+
+        case AND -> data.constructor.newAnd(lhs, rhs);
+        case OR -> data.constructor.newOr(lhs, rhs);
+        case XOR -> data.constructor.newXor(lhs, rhs);
+
+        case LOGICAL_EQUAL -> {
+            int size = binaryOperationTree.operator().type() == Operator.OperatorType.LOGICAL_EQUAL
+                ? data.constructor.graph().getTypeSize(binaryOperationTree.lhs().type())
+                : 0;
+          data.constructor.newEq(lhs, rhs, size);
+        }
+        case LESS_EQUAL -> data.constructor.newEq(lhs, rhs);
+        case GREATER_EQUAL -> data.constructor.newEq(rhs, lhs);
+        case LESS -> data.constructor.newLess(lhs, rhs);
+        case GREATER -> data.constructor.newLess(rhs, lhs);
+
         default ->
           throw new IllegalArgumentException("not a binary expression operator " + binaryOperationTree.operatorType());
       };
