@@ -53,7 +53,10 @@ public class Parser {
         StatementTree statement;
         if (this.tokenSource.peek().isKeyword(KeywordType.INT) || this.tokenSource.peek().isKeyword(KeywordType.BOOL)) {
             statement = parseDeclaration();
-        } else if (this.tokenSource.peek().isKeyword(KeywordType.RETURN)) {
+        } else if (this.tokenSource.peek().isControlFlow()) {
+            statement = parseControlFlow();
+        }
+        else if (this.tokenSource.peek().isKeyword(KeywordType.RETURN)) {
             statement = parseReturn();
         } else {
             statement = parseSimple();
@@ -102,7 +105,7 @@ public class Parser {
     private Operator parseAssignmentOperator() {
         if (this.tokenSource.peek() instanceof Operator op) {
             return switch (op.type()) {
-                case ASSIGN, ASSIGN_DIV, ASSIGN_MINUS, ASSIGN_MOD, ASSIGN_MUL, ASSIGN_PLUS -> {
+                case ASSIGN, ASSIGN_DIV, ASSIGN_MINUS, ASSIGN_MOD, ASSIGN_MUL, ASSIGN_PLUS, ASSIGN_BITWISE_AND, ASSIGN_BITWISE_OR, ASSIGN_BITWISE_XOR -> {
                     this.tokenSource.consume();
                     yield op;
                 }
@@ -153,6 +156,65 @@ public class Parser {
                 return lhs;
             }
         }
+    }
+    private ControlFlowTree parseControlFlow() {
+        Token token = this.tokenSource.peek();
+        switch (token) {
+            case Keyword(var type, Span span) when type == KeywordType.IF -> {
+                this.tokenSource.consume();
+                this.tokenSource.expectSeparator(SeparatorType.PAREN_OPEN);
+                ExpressionTree condition = parseExpression();
+                this.tokenSource.expectSeparator(SeparatorType.PAREN_CLOSE);
+                BlockTree thenBlock = parseBlock();
+                BlockTree elseBlock = null;
+                if (this.tokenSource.peek().isKeyword(KeywordType.ELSE)) {
+                    this.tokenSource.expectKeyword(KeywordType.ELSE);
+                    elseBlock = parseBlock();
+                }
+                return  new IfTree(condition, thenBlock, elseBlock, span.start());
+            }
+            case Keyword(var type, Span span) when type == KeywordType.WHILE -> {
+                this.tokenSource.consume();
+                this.tokenSource.expectSeparator(SeparatorType.PAREN_OPEN);
+                ExpressionTree condition = parseExpression();
+                this.tokenSource.expectSeparator(SeparatorType.PAREN_CLOSE);
+                BlockTree body = parseBlock();
+                return new WhileTree(condition, body, span.start());
+            }
+            case Keyword(var type, Span span) when type == KeywordType.FOR -> {
+                this.tokenSource.consume();
+                this.tokenSource.expectSeparator(SeparatorType.PAREN_OPEN);
+                TypeTree typetree = parseType();
+                Identifier ident = this.tokenSource.expectIdentifier();
+                this.tokenSource.expectOperator(OperatorType.ASSIGN);
+                ExpressionTree start = parseExpression();
+                this.tokenSource.expectSeparator(SeparatorType.SEMICOLON);
+                ExpressionTree condition = parseExpression();
+                this.tokenSource.expectSeparator(SeparatorType.SEMICOLON);
+                StatementTree step = parseStatement();
+                this.tokenSource.expectSeparator(SeparatorType.PAREN_CLOSE);
+                BlockTree body = parseBlock();
+                NameTree name = name(ident);
+                DeclarationTree declarationTree = new DeclarationTree(typetree, name, start);
+                name.addReference(declarationTree);
+                return new ForTree(declarationTree, condition, step, body, span.start());
+            }
+            case Keyword(var type, Span span) when type == KeywordType.BREAK -> {
+                this.tokenSource.consume();
+                return new BreakTree(span);
+            }
+            case Keyword(var type, Span span) when type == KeywordType.CONTINUE -> {
+                this.tokenSource.consume();
+                return new ContinueTree(span);
+            }
+            case Keyword(var type, Span span) when type == KeywordType.RETURN -> {
+                this.tokenSource.consume();
+                ExpressionTree expression = parseExpression();
+                return new ReturnTree(expression, span.start());
+            }
+            default -> throw new ParseException("expected control flow but got " + token);
+        }
+
     }
 
 

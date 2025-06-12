@@ -19,4 +19,6 @@ public sealed interface Token permits ErrorToken, Identifier, Keyword, NumberLit
     }
 
     String asString();
+
+    default  boolean isControlFlow() {return  false;};
 }

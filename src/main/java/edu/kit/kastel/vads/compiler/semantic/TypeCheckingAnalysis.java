@@ -67,7 +67,6 @@ public class TypeCheckingAnalysis implements NoOpVisitor<List<ReturnTree>> {
             throw new SemanticException("Type mismatch in assignment: " + assignmentTree);
         }
         if (opType != Operator.OperatorType.ASSIGN) {
-            System.out.println("operator " +opType + " type " + opType.inputType() + " other type " + lValueType);
             if(!opType.inputType().equals(lValueType)) {
                 throw new SemanticException("Type mismatch for operator"+ opType +" and value " + lValueType);
             }
