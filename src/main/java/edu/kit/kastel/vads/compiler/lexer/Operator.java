@@ -4,6 +4,7 @@ import edu.kit.kastel.vads.compiler.Span;
 import edu.kit.kastel.vads.compiler.parser.type.BasicType;
 import edu.kit.kastel.vads.compiler.parser.type.Type;
 
+import java.util.Arrays;
 import java.util.List;
 
 public record Operator(OperatorType type, Span span) implements Token {
@@ -59,12 +60,22 @@ public record Operator(OperatorType type, Span span) implements Token {
         TERNARY_COLON(":", List.of()),
         TERNARY_CONDITION("?", List.of());
 
+        public static final int MAX_PRECEDENCE = Arrays.stream(Operator.OperatorType.values())
+                .flatMap(operatorType -> operatorType.precedence().stream())
+                .max(Integer::compare).orElseThrow(() -> new IllegalStateException("No precedence values found"));
+        public static final int UNARY_PRECEDENCE = 1;
+
         private final String value;
+
         private final List<Integer> precedence;
+
         OperatorType(String value, List<Integer> precedence) {
             this.value = value;
             this.precedence = precedence;
 
+        }
+        public  List<Integer> precedence() {
+            return this.precedence;
         }
 
         public Type inputType() {

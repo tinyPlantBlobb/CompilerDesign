@@ -266,6 +266,21 @@ public class SsaTranslation {
       return Optional.empty();
     }
 
+    @Override
+    public Optional<Node> visit(UnaryOperationTree unaryOperationTree, SsaTranslation data) {
+      pushSpan(unaryOperationTree);
+      Node operand = unaryOperationTree.expression().accept(this, data).orElseThrow();
+      Node res = switch (unaryOperationTree.operand().type()) {
+        case MINUS -> data.constructor.newSub(data.constructor.newConstInt(0), operand);
+        case BITWISE_NOT -> data.constructor.newBitwiseNot(operand);
+        case LOGICAL_NOT -> data.constructor.newLogicalNot(operand);
+        default ->
+          throw new IllegalArgumentException("not a unary expression operator " + unaryOperationTree.operand().type());
+      };
+      popSpan();
+      return Optional.of(res);
+    }
+    
     private Node projResultDivMod(SsaTranslation data, Node divMod) {
       // make sure we actually have a div or a mod, as optimizations could
       // have changed it to something else already

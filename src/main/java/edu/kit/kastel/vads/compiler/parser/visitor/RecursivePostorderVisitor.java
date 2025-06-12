@@ -160,6 +160,12 @@ public class RecursivePostorderVisitor<T, R> implements Visitor<T, R> {
         R r = this.visitor.visit(continueTree, data);
         return r;
     }
+    @Override
+    public R visit(UnaryOperationTree unaryOperationTree, T data) {
+        R r = unaryOperationTree.expression().accept(this, data);
+        r = this.visitor.visit(unaryOperationTree, accumulate(data, r));
+        return r;
+    }
 
     protected T accumulate(T data, R value) {
         return data;

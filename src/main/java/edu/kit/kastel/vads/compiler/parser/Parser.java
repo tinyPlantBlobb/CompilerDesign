@@ -133,7 +133,7 @@ public class Parser {
     }
 
     private ExpressionTree parseExpression() {
-        ExpressionTree lhs = parseTerm();
+        ExpressionTree lhs = parsePrecedenceExpression(OperatorType.MAX_PRECEDENCE);
         while (true) {
             if (this.tokenSource.peek() instanceof Operator(var type, _)
                 && (type == OperatorType.PLUS || type == OperatorType.MINUS)) {
@@ -141,6 +141,49 @@ public class Parser {
                 lhs = new BinaryOperationTree(lhs, parseTerm(), type);
             } else {
                 return lhs;
+            }
+        }
+    }
+    private ExpressionTree parsePrecedenceExpression(int precedence) {
+        if (precedence == OperatorType.UNARY_PRECEDENCE) {
+            return parseUnaryExpression(precedence);
+        } else if (precedence == 0) {
+            return parseTerm();
+        }
+        ExpressionTree lhs = parsePrecedenceExpression(precedence - 1);
+        while (true) {
+            if (this.tokenSource.peek() instanceof Operator(var type, _)
+                && type.precedence().contains(precedence)) {
+                this.tokenSource.consume();
+                lhs = new BinaryOperationTree(lhs, parsePrecedenceExpression(precedence - 1), type);
+            } else {
+                return lhs;
+            }
+        }
+    }
+    private ExpressionTree parseUnaryExpression(int precedence) {
+        System.out.println(this.tokenSource.peek());
+        if (this.tokenSource.peek() instanceof Operator(var type, _)
+            && type.precedence().contains(precedence)) {
+            Operator token = this.tokenSource.expectOperator(type);
+            this.tokenSource.consume();
+            ExpressionTree operand = parsePrecedenceExpression(precedence);
+            return new UnaryOperationTree(token, operand);
+        } else {
+            return parseTerm();
+        }
+    }
+
+    private StatementTree parseSimpop() {
+        Token seperator = this.tokenSource.peek();
+        if ((seperator instanceof Separator(var type, _))) {
+            return null;
+        } else {
+            Token next = this.tokenSource.peek();
+            if (next.isKeyword(KeywordType.INT)||next.isKeyword(KeywordType.BOOL)) {
+               return parseDeclaration();
+            } else {
+               return parseSimple();
             }
         }
     }
@@ -184,20 +227,17 @@ public class Parser {
             case Keyword(var type, Span span) when type == KeywordType.FOR -> {
                 this.tokenSource.consume();
                 this.tokenSource.expectSeparator(SeparatorType.PAREN_OPEN);
-                TypeTree typetree = parseType();
-                Identifier ident = this.tokenSource.expectIdentifier();
-                this.tokenSource.expectOperator(OperatorType.ASSIGN);
-                ExpressionTree start = parseExpression();
+                StatementTree decl =  parseSimpop();
+                System.out.println(decl);
                 this.tokenSource.expectSeparator(SeparatorType.SEMICOLON);
                 ExpressionTree condition = parseExpression();
-                this.tokenSource.expectSeparator(SeparatorType.SEMICOLON);
+                System.out.println(condition);
+                //this.tokenSource.expectSeparator(SeparatorType.SEMICOLON);
                 StatementTree step = parseStatement();
                 this.tokenSource.expectSeparator(SeparatorType.PAREN_CLOSE);
-                BlockTree body = parseBlock();
-                NameTree name = name(ident);
-                DeclarationTree declarationTree = new DeclarationTree(typetree, name, start);
-                name.addReference(declarationTree);
-                return new ForTree(declarationTree, condition, step, body, span.start());
+                StatementTree body = parseStatement();
+
+                return new ForTree(decl, condition, step, body, span.start());
             }
             case Keyword(var type, Span span) when type == KeywordType.BREAK -> {
                 this.tokenSource.consume();

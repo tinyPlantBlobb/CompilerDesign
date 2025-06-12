@@ -40,4 +40,6 @@ public interface Visitor<T, R> {
     R visit(BreakTree breakTree, T data);
 
     R visit(ContinueTree continueTree, T data);
+
+    R visit(UnaryOperationTree unaryOperationTree, T data);
 }

@@ -225,6 +225,8 @@ public class YCompPrinter {
             case ReturnNode _ -> VcgColor.CONTROL_FLOW;
             case StartNode _ -> VcgColor.CONTROL_FLOW;
             case JumpNode jumpNode -> VcgColor.CONTROL_FLOW;
+            case BitwiseNotNode bitwiseNotNode -> VcgColor.NORMAL;
+            case LogicalNotNode logicalNotNode ->VcgColor.NORMAL;
         };
     }
 

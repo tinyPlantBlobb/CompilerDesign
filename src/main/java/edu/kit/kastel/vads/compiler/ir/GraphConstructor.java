@@ -115,6 +115,10 @@ public Node newRightShift(Node left, Node right) {
     public Node newLogicalOr(Node lhs, Node rhs) {
         return this.optimizer.transform(new LogicalOrNode(currentBlock(), lhs, rhs));
     }
+
+    public Node newBitwiseNot(Node operand) {
+        return this.optimizer.transform(new BitwiseNotNode(currentBlock(), operand));
+    }
     public Block currentBlock() {
         return this.currentBlock;
     }
@@ -228,4 +232,7 @@ public Node newRightShift(Node left, Node right) {
     }
 
 
+    public Node newLogicalNot(Node operand) {
+        return this.optimizer.transform(new LogicalNotNode(currentBlock(), operand));
+    }
 }
