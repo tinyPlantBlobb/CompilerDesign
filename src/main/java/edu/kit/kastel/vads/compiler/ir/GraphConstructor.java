@@ -235,4 +235,23 @@ public Node newRightShift(Node left, Node right) {
     public Node newLogicalNot(Node operand) {
         return this.optimizer.transform(new LogicalNotNode(currentBlock(), operand));
     }
+
+    public Node newIf(Node condition) {
+        return this.optimizer.transform(new IfNode(currentBlock(), condition));
+    }
+    public ProjNode newIfTrueProj(Node node) {
+        return new ProjNode(currentBlock(), node, ProjNode.SimpleProjectionInfo.IF_TRUE);
+    }
+    public ProjNode newIfFalseProj(Node node) {
+        return new ProjNode(currentBlock(), node, ProjNode.SimpleProjectionInfo.IF_FALSE);
+    }
+
+    public Block newBlock(String content) {
+        return new Block(this.graph, content);
+    }
+    public void setCurrentBlock(Block block) {
+        assert block != null : "block must not be null";
+        assert !this.sealedBlocks.contains(block) : "cannot set current block to a sealed block";
+        this.currentBlock = block;
+    }
 }

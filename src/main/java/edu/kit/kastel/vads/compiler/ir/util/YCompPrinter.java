@@ -227,6 +227,8 @@ public class YCompPrinter {
             case JumpNode jumpNode -> VcgColor.CONTROL_FLOW;
             case BitwiseNotNode bitwiseNotNode -> VcgColor.NORMAL;
             case LogicalNotNode logicalNotNode ->VcgColor.NORMAL;
+            case IfNode ifNode -> VcgColor.CONTROL_FLOW;
+            default -> throw new RuntimeException("Unknown node: " + node);
         };
     }
 

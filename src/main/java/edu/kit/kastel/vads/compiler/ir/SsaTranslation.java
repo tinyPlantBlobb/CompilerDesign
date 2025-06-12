@@ -1,9 +1,6 @@
 package edu.kit.kastel.vads.compiler.ir;
 
-import edu.kit.kastel.vads.compiler.ir.node.Block;
-import edu.kit.kastel.vads.compiler.ir.node.DivNode;
-import edu.kit.kastel.vads.compiler.ir.node.ModNode;
-import edu.kit.kastel.vads.compiler.ir.node.Node;
+import edu.kit.kastel.vads.compiler.ir.node.*;
 import edu.kit.kastel.vads.compiler.ir.optimize.Optimizer;
 import edu.kit.kastel.vads.compiler.ir.util.DebugInfo;
 import edu.kit.kastel.vads.compiler.ir.util.DebugInfoHelper;
@@ -280,7 +277,45 @@ public class SsaTranslation {
       popSpan();
       return Optional.of(res);
     }
-    
+
+    @Override
+    public Optional<Node> visit(TernaryOperationTree ternaryOperationTree, SsaTranslation data) {
+      pushSpan(ternaryOperationTree);
+      Node condition = ternaryOperationTree.condition().accept(this, data).orElseThrow();
+      IfProjections ifProjection = ProjectIfNode(data, condition);
+      Block trueBlock = data.constructor.newBlock("terniary_then");
+      trueBlock.addPredecessor(ifProjection.trueProj);
+      Block falseBlock = data.constructor.newBlock("terniary_else");
+      falseBlock.addPredecessor(ifProjection.falseProj);
+      data.constructor.sealBlock(trueBlock);
+      data.constructor.sealBlock(falseBlock);
+
+      data.constructor.setCurrentBlock(trueBlock);
+      Node thenBranch = ternaryOperationTree.thenExpression().accept(this, data).orElseThrow();
+      Node thenJump = data.constructor.newJump(trueBlock);
+      data.constructor.setCurrentBlock(falseBlock);
+      Node elseBranch = ternaryOperationTree.elseExpression().accept(this, data).orElseThrow();
+      Node elseJump = data.constructor.newJump(falseBlock);
+      Block endBlock = data.constructor.newBlock("terniary_end");
+      data.constructor.setCurrentBlock(endBlock);
+      endBlock.addPredecessor(thenJump);
+      endBlock.addPredecessor(elseJump);
+      data.constructor.sealBlock(endBlock);
+      Phi value = data.constructor.newPhi();
+      value.addPredecessor(thenBranch);
+      value.addPredecessor(elseBranch);
+      data.constructor.setCurrentBlock(endBlock);
+      return Optional.of(data.constructor.tryRemoveTrivialPhi(value));
+    }
+
+    private IfProjections ProjectIfNode(SsaTranslation data, Node condition) {
+      Node ifNode = data.constructor.newIf(condition);
+      ProjNode trueProj = data.constructor.newIfTrueProj(ifNode);
+      ProjNode falseProj = data.constructor.newIfFalseProj(ifNode);
+      return new IfProjections(trueProj, falseProj);
+    }
+    private record IfProjections(ProjNode trueProj, ProjNode falseProj) {}
+
     private Node projResultDivMod(SsaTranslation data, Node divMod) {
       // make sure we actually have a div or a mod, as optimizations could
       // have changed it to something else already

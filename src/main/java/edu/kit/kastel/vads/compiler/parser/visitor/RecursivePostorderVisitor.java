@@ -154,6 +154,14 @@ public class RecursivePostorderVisitor<T, R> implements Visitor<T, R> {
         R r = this.visitor.visit(breakTree, data);
         return r;
     }
+     @Override
+    public R visit(TernaryOperationTree ternaryOperationTree, T data) {
+        R r = ternaryOperationTree.condition().accept(this, data);
+        r = ternaryOperationTree.thenExpression().accept(this, accumulate(data, r));
+        r = ternaryOperationTree.elseExpression().accept(this, accumulate(data, r));
+        r = this.visitor.visit(ternaryOperationTree, accumulate(data, r));
+        return r;
+    }
 
     @Override
     public R visit(ContinueTree continueTree, T data) {
