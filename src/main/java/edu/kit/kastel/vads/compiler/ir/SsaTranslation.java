@@ -195,7 +195,7 @@ public class SsaTranslation {
     public Optional<Node> visit(LiteralBoolTree literalTree, SsaTranslation data) {
       pushSpan(literalTree);
       Node node = data.constructor.newConstBool(literalTree.parseValue());
-      return Optional.empty();
+      return Optional.of(node);
     }
 
 

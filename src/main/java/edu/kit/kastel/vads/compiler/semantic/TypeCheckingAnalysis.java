@@ -14,10 +14,7 @@ public class TypeCheckingAnalysis implements NoOpVisitor<List<ReturnTree>> {
     public Unit visit(FunctionTree functionTree, List<ReturnTree> data) {
         // Check function parameters and return type
         for (ReturnTree returnTree : data) {
-            //System.out.println(returnTree);
-            //System.out.println(returnTree.expression());
-            //System.out.println(returnTree.expression().type());
-            System.out.println(functionTree);
+
             if (!(returnTree.expression().type()).equals(functionTree.returnType().type()) ){
                 throw new SemanticException("Function " + functionTree.name() + " does not return the expected type: " +
                         functionTree.returnType().type() + ", but got " + returnTree.expression().type());
