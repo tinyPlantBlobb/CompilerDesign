@@ -135,26 +135,23 @@ public class Parser {
     private ExpressionTree parseExpression() {
         ExpressionTree lhs = parsePrecedenceExpression(OperatorType.MAX_PRECEDENCE);
         System.out.println("Expression lhs "+lhs+ " token: " + this.tokenSource.peek());
-            if (this.tokenSource.peek() instanceof Operator(var type, _) ) {
-                System.out.println("Operator token: " + this.tokenSource.peek());
-                if (type != OperatorType.TERNARY_CONDITION || type == null) {
-                    System.out.println("Expression lhs " + lhs + " token: " + this.tokenSource.peek());
-                    return lhs;
+            if (this.tokenSource.peek().isOperator(OperatorType.TERNARY_CONDITION) ) {
+                    this.tokenSource.consume();
+                    ExpressionTree trueExpression = parseExpression();
+                    this.tokenSource.expectOperator(OperatorType.TERNARY_COLON);
+                    ExpressionTree falseExpression = parseExpression();
+                    return new TernaryOperationTree(lhs, trueExpression, falseExpression);
                 }
+            else {
+                return lhs;
             }
-            this.tokenSource.consume();
-            ExpressionTree trueExpression = parseExpression();
-            System.out.println("Expression got righthand side Expression waiting for tern");
-            this.tokenSource.expectOperator(OperatorType.TERNARY_COLON);
-            ExpressionTree falseExpression = parseExpression();
-            return new TernaryOperationTree(lhs, trueExpression, falseExpression);
 
     }
     private ExpressionTree parsePrecedenceExpression(int precedence) {
         if (precedence == OperatorType.UNARY_PRECEDENCE) {
             return parseUnaryExpression(precedence);
         } else if (precedence == 0) {
-            return parseTerm();
+            return parseBasicExpression();
         }
         ExpressionTree lhs = parsePrecedenceExpression(precedence - 1);
         while (true) {
@@ -165,6 +162,30 @@ public class Parser {
             } else {
                 return lhs;
             }
+        }
+    }
+    private ExpressionTree parseBasicExpression() {
+        Token next = this.tokenSource.peek();
+        switch (next) {
+            case Separator(var type, _) when next.isSeparator(SeparatorType.PAREN_OPEN) -> {
+                this.tokenSource.consume();
+                ExpressionTree expression = parseExpression();
+                this.tokenSource.expectSeparator(SeparatorType.PAREN_CLOSE);
+                return expression;
+            }
+            case Identifier ident -> {
+                this.tokenSource.consume();
+                return new IdentExpressionTree(name(ident));
+            }
+            case NumberLiteral(String value, int base, Span span) -> {
+                this.tokenSource.consume();
+                return new LiteralIntTree(value, base, span);
+            }
+            case Keyword(var type, Span span) when type == KeywordType.TRUE || type == KeywordType.FALSE -> {
+                this.tokenSource.consume();
+                return new LiteralBoolTree(new Keyword(type, span));
+            }
+            default -> throw new ParseException("expected basic expression but got " + next);
         }
     }
     private ExpressionTree parseUnaryExpression(int precedence) {
@@ -214,20 +235,24 @@ public class Parser {
                 this.tokenSource.expectSeparator(SeparatorType.PAREN_OPEN);
                 ExpressionTree condition = parseExpression();
                 this.tokenSource.expectSeparator(SeparatorType.PAREN_CLOSE);
-                BlockTree thenBlock = parseBlock();
-                BlockTree elseBlock = null;
+                StatementTree thenTree = parseStatement();
+
                 if (this.tokenSource.peek().isKeyword(KeywordType.ELSE)) {
                     this.tokenSource.expectKeyword(KeywordType.ELSE);
-                    elseBlock = parseBlock();
+                    StatementTree elseTree = parseStatement();
+                    return new IfTree(condition, thenTree, elseTree, span.start());
                 }
-                return  new IfTree(condition, thenBlock, elseBlock, span.start());
+                else {
+                    return new IfTree(condition, thenTree, null, span.start());
+                }
+
             }
             case Keyword(var type, Span span) when type == KeywordType.WHILE -> {
-                this.tokenSource.consume();
+                this.tokenSource.expectKeyword(KeywordType.WHILE);
                 this.tokenSource.expectSeparator(SeparatorType.PAREN_OPEN);
                 ExpressionTree condition = parseExpression();
                 this.tokenSource.expectSeparator(SeparatorType.PAREN_CLOSE);
-                BlockTree body = parseBlock();
+                StatementTree body = parseStatement();
                 return new WhileTree(condition, body, span.start());
             }
             case Keyword(var type, Span span) when type == KeywordType.FOR -> {
@@ -237,7 +262,7 @@ public class Parser {
                 this.tokenSource.expectSeparator(SeparatorType.PAREN_OPEN);
                 System.out.println("For token: " + this.tokenSource.peek());
                 StatementTree decl =  parseSimpop();
-                System.out.println("For looop decl "+decl);
+                System.out.println("For loop decl "+decl);
                 this.tokenSource.expectSeparator(SeparatorType.SEMICOLON);
                 ExpressionTree condition = parseExpression();
                 System.out.println("condition node "+condition);
@@ -249,16 +274,19 @@ public class Parser {
                 return new ForTree(decl, condition, step, body, span.start());
             }
             case Keyword(var type, Span span) when type == KeywordType.BREAK -> {
-                this.tokenSource.consume();
+                this.tokenSource.expectKeyword(KeywordType.BREAK);
+                this.tokenSource.expectSeparator(SeparatorType.SEMICOLON);
                 return new BreakTree(span);
             }
             case Keyword(var type, Span span) when type == KeywordType.CONTINUE -> {
-                this.tokenSource.consume();
+                this.tokenSource.expectKeyword(KeywordType.CONTINUE);
+                this.tokenSource.expectSeparator(SeparatorType.SEMICOLON);
                 return new ContinueTree(span);
             }
             case Keyword(var type, Span span) when type == KeywordType.RETURN -> {
-                this.tokenSource.consume();
+                this.tokenSource.expectKeyword(KeywordType.RETURN);
                 ExpressionTree expression = parseExpression();
+                this.tokenSource.expectSeparator(SeparatorType.SEMICOLON);
                 return new ReturnTree(expression, span.start());
             }
             default -> throw new ParseException("expected control flow but got " + token);
