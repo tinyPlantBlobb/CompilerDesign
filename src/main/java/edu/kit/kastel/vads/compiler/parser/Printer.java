@@ -100,6 +100,8 @@ public class Printer {
             case LValueIdentTree(var name) -> printTree(name);
             case IdentExpressionTree(var name) -> printTree(name);
             case BreakTree breakTree -> {
+                print("break");
+                semicolon();
             }
             case ContinueTree continueTree -> {
                 print("continue");
@@ -136,6 +138,12 @@ public class Printer {
                 printTree(whileTree.condition());
                 print(") ");
                 printTree(whileTree.loopBody());
+            }
+            case UnaryOperationTree unaryOperationTree -> {
+                print(unaryOperationTree.operand().asString());
+                print("(");
+                printTree(unaryOperationTree.expression());
+                print(")");
             }
             default -> {
                 throw new IllegalArgumentException("Unknown tree type: " + tree.getClass().getSimpleName());

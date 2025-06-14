@@ -19,7 +19,9 @@ public class Parser {
     }
 
     public ProgramTree parseProgram() {
+
         ProgramTree programTree = new ProgramTree(List.of(parseFunction()));
+
         if (this.tokenSource.hasMore()) {
             throw new ParseException("expected end of input but got " + this.tokenSource.peek());
         }
@@ -54,7 +56,7 @@ public class Parser {
         StatementTree statement;
         if (this.tokenSource.peek().isKeyword(KeywordType.INT) || this.tokenSource.peek().isKeyword(KeywordType.BOOL)) {
             statement = parseDeclaration();
-            //System.out.println("Parsed decl: " + statement);
+            //System.out.println("Parsed decl: " + Printer.print(statement));
         } else if (this.tokenSource.peek().isControlFlow()) {
             statement = parseControlFlow();
             return  statement;
@@ -133,7 +135,9 @@ public class Parser {
 
 
     private ExpressionTree parseExpression() {
+        //System.out.println("Parsed with token " + this.tokenSource.peek());
         ExpressionTree lhs = parsePrecedenceExpression(OperatorType.MAX_PRECEDENCE);
+        //System.out.println("Parsed left hand side: " + Printer.print(lhs)+ " with token " + this.tokenSource.peek());
             if (this.tokenSource.peek().isOperator(OperatorType.TERNARY_CONDITION) ) {
                     this.tokenSource.consume();
                     ExpressionTree trueExpression = parseExpression();
@@ -147,13 +151,15 @@ public class Parser {
 
     }
     private ExpressionTree parsePrecedenceExpression(int precedence) {
-
+        //System.out.println("precedence "+this.tokenSource.peek());
         if (precedence == OperatorType.UNARY_PRECEDENCE) {
             return parseUnaryExpression(precedence);
         } else if (precedence == 0) {
             return parseBasicExpression();
         }
+        //System.out.println("Parsing precedence expression with precedence " + precedence + " and token " + this.tokenSource.peek());
         ExpressionTree lhs = parsePrecedenceExpression(precedence - 1);
+
         while (true) {
             if (this.tokenSource.peek() instanceof Operator(var type, _)
                 && type.precedence().contains(precedence)) {
@@ -196,7 +202,7 @@ public class Parser {
         if (this.tokenSource.peek() instanceof Operator(var type, _)
             && type.precedence().contains(precedence)) {
             Operator token = this.tokenSource.expectOperator(type);
-            this.tokenSource.consume();
+            //System.out.println("Parsing unary operation with type " + type + " and next token " + this.tokenSource.peek());
             ExpressionTree operand = parsePrecedenceExpression(precedence);
             return new UnaryOperationTree(token, operand);
         } else {
