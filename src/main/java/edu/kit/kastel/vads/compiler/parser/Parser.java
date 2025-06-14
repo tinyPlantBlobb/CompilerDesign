@@ -54,7 +54,7 @@ public class Parser {
         StatementTree statement;
         if (this.tokenSource.peek().isKeyword(KeywordType.INT) || this.tokenSource.peek().isKeyword(KeywordType.BOOL)) {
             statement = parseDeclaration();
-            System.out.println("Parsed decl: " + statement);
+            //System.out.println("Parsed decl: " + statement);
         } else if (this.tokenSource.peek().isControlFlow()) {
             statement = parseControlFlow();
             return  statement;
@@ -64,7 +64,7 @@ public class Parser {
 
         } else {
             statement = parseSimple();
-            System.out.println("Parsed simple statement: " + statement);
+            //System.out.println("Parsed simple statement: " + statement);
         }
         this.tokenSource.expectSeparator(SeparatorType.SEMICOLON);
         return statement;
@@ -142,7 +142,6 @@ public class Parser {
                     return new TernaryOperationTree(lhs, trueExpression, falseExpression);
                 }
             else {
-                System.out.println("returnning Expression lhs "+Printer.print(lhs));
                 return lhs;
             }
 
@@ -159,9 +158,9 @@ public class Parser {
             if (this.tokenSource.peek() instanceof Operator(var type, _)
                 && type.precedence().contains(precedence)) {
                 this.tokenSource.consume();
-                System.out.println("Parsing binary operation with precedence " + precedence + " and type " + type);
+                //System.out.println("Parsing binary operation with precedence " + precedence + " and type " + type);
                 lhs = new BinaryOperationTree(lhs, parsePrecedenceExpression(precedence - 1), type);
-                System.out.println(Printer.print(lhs));
+                //System.out.println(Printer.print(lhs));
             } else {
                 return lhs;
 
@@ -193,7 +192,7 @@ public class Parser {
         }
     }
     private ExpressionTree parseUnaryExpression(int precedence) {
-        System.out.println("Unary Expression first token" +this.tokenSource.peek());
+        //System.out.println("Unary Expression first token" +this.tokenSource.peek());
         if (this.tokenSource.peek() instanceof Operator(var type, _)
             && type.precedence().contains(precedence)) {
             Operator token = this.tokenSource.expectOperator(type);
@@ -220,7 +219,7 @@ public class Parser {
 
     private ControlFlowTree parseControlFlow() {
         Token token = this.tokenSource.peek();
-        System.out.println("Control flow token: " + token);
+        //System.out.println("Control flow token: " + token);
         switch (token) {
             case Keyword(var type, Span span) when type == KeywordType.IF -> {
                 this.tokenSource.consume();
@@ -251,7 +250,7 @@ public class Parser {
 
                 this.tokenSource.consume();
                 this.tokenSource.expectSeparator(SeparatorType.PAREN_OPEN);
-                System.out.println("For token: " + this.tokenSource.peek());
+                //System.out.println("For token: " + this.tokenSource.peek());
                 StatementTree decl =  parseSimpop();
                 //System.out.println("For loop decl "+decl);
                 this.tokenSource.expectSeparator(SeparatorType.SEMICOLON);
@@ -261,7 +260,7 @@ public class Parser {
                 StatementTree step = parseSimpop();
 
                 this.tokenSource.expectSeparator(SeparatorType.PAREN_CLOSE);
-                System.out.println("next token after step"+this.tokenSource.peek());
+                //System.out.println("next token after step"+this.tokenSource.peek());
                 StatementTree body = parseStatement();
 
                 return new ForTree(decl, condition, step, body, span.start());
@@ -278,9 +277,7 @@ public class Parser {
             }
             case Keyword(var type, Span span) when type == KeywordType.RETURN -> {
                 this.tokenSource.expectKeyword(KeywordType.RETURN);
-                System.out.println("Return token: " + this.tokenSource.peek());
                 ExpressionTree expression = parseExpression();
-                System.out.println("next "+ this.tokenSource.peek());
                 this.tokenSource.expectSeparator(SeparatorType.SEMICOLON);
                 return new ReturnTree(expression, span.start());
             }

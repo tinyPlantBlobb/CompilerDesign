@@ -116,22 +116,117 @@ public class x86CodeGenerator {
                     // do nothing, skip line break
                 }
                 case ArithmeticShiftLeftNode arithmeticShiftLeftNode -> {
+                    Register target = registers.get(arithmeticShiftLeftNode);
+                    Register left = registers.get(predecessorSkipProj(arithmeticShiftLeftNode, BinaryOperationNode.LEFT));
+                    Register right = registers.get(predecessorSkipProj(arithmeticShiftLeftNode, BinaryOperationNode.RIGHT));
+                    if (left instanceof x86Registers.OverflowRegisters){
+                        builder.append("  ")
+                                .append("mov ")
+                                .append(x86Registers.RealRegisters.R15D).append(", ")
+                                .append(left).append("\n");
+                        builder.append("shl ").append(x86Registers.RealRegisters.R15D).append(", ").append(right).append("\n")
+                                .append("mov ").append(target).append(", ").append(x86Registers.RealRegisters.R15D).append("\n");
+                    } else {
+                        builder.append("  ")
+                                .append("shl ").append(target).append(", ").append(right).append("\n");
+                    }
                 }
                 case ArithmeticShiftRightNode arithmeticShiftRightNode -> {
+                    Register target = registers.get(arithmeticShiftRightNode);
+                    Register left = registers.get(predecessorSkipProj(arithmeticShiftRightNode, BinaryOperationNode.LEFT));
+                    Register right = registers.get(predecessorSkipProj(arithmeticShiftRightNode, BinaryOperationNode.RIGHT));
+                    if (left instanceof x86Registers.OverflowRegisters){
+                        builder.append("  ")
+                                .append("mov ")
+                                .append(x86Registers.RealRegisters.R15D).append(", ")
+                                .append(left).append("\n");
+                        builder.append("shr ").append(x86Registers.RealRegisters.R15D).append(", ").append(right).append("\n")
+                                .append("mov ").append(target).append(", ").append(x86Registers.RealRegisters.R15D).append("\n");
+                    } else {
+                        builder.append("  ")
+                                .append("shr ").append(target).append(", ").append(right).append("\n");
+                    }
                 }
                 case BitwiseAndNode bitwiseAndNode -> {
+                    binary(builder, registers, bitwiseAndNode, "and");
                 }
                 case BitwiseOrNode bitwiseOrNode -> {
+                    binary(builder, registers, bitwiseOrNode, "or");
                 }
                 case LogicalAndNode logicalAndNode -> {
+                    Register target = registers.get(logicalAndNode);
+                    Register left = registers.get(predecessorSkipProj(logicalAndNode, BinaryOperationNode.LEFT));
+                    Register right = registers.get(predecessorSkipProj(logicalAndNode, BinaryOperationNode.RIGHT));
+                    builder.append("  ")
+                        .append("mov ").append(target).append(", ").append(left).append("\n")
+                        .append("  ")
+                        .append("and ").append(target).append(", ").append(right).append("\n");
                 }
                 case LogicalOrNode logicalOrNode -> {
+                    Register target = registers.get(logicalOrNode);
+                    Register left = registers.get(predecessorSkipProj(logicalOrNode, BinaryOperationNode.LEFT));
+                    Register right = registers.get(predecessorSkipProj(logicalOrNode, BinaryOperationNode.RIGHT));
+                    builder.append("  ")
+                        .append("mov ").append(target).append(", ").append(left).append("\n")
+                        .append("  ")
+                        .append("or ").append(target).append(", ").append(right).append("\n");
                 }
                 case LogicalShiftLeftNode logicalShiftLeftNode -> {
+                    Register target = registers.get(logicalShiftLeftNode);
+                    Register left = registers.get(predecessorSkipProj(logicalShiftLeftNode, BinaryOperationNode.LEFT));
+                    Register right = registers.get(predecessorSkipProj(logicalShiftLeftNode, BinaryOperationNode.RIGHT));
+                    if (left instanceof x86Registers.OverflowRegisters){
+                        builder.append("  ")
+                                .append("mov ")
+                                .append(x86Registers.RealRegisters.R15D).append(", ")
+                                .append(left).append("\n");
+                        builder.append("shl ").append(x86Registers.RealRegisters.R15D).append(", ").append(right).append("\n")
+                                .append("mov ").append(target).append(", ").append(x86Registers.RealRegisters.R15D).append("\n");
+                    } else {
+                        builder.append("  ")
+                                .append("shl ").append(target).append(", ").append(right).append("\n");
+                    }
                 }
                 case LogicalShiftRightNode logicalShiftRightNode -> {
+                    Register target = registers.get(logicalShiftRightNode);
+                    Register left = registers.get(predecessorSkipProj(logicalShiftRightNode, BinaryOperationNode.LEFT));
+                    Register right = registers.get(predecessorSkipProj(logicalShiftRightNode, BinaryOperationNode.RIGHT));
+                    if (left instanceof x86Registers.OverflowRegisters){
+                        builder.append("  ")
+                                .append("mov ")
+                                .append(x86Registers.RealRegisters.R15D).append(", ")
+                                .append(left).append("\n");
+                        builder.append("shr ").append(x86Registers.RealRegisters.R15D).append(", ").append(right).append("\n")
+                                .append("mov ").append(target).append(", ").append(x86Registers.RealRegisters.R15D).append("\n");
+                    } else {
+                        builder.append("  ")
+                                .append("shr ").append(target).append(", ").append(right).append("\n");
+                    }
                 }
                 case XorNode xorNode -> {
+                    Register target = registers.get(xorNode);
+                    Register left = registers.get(predecessorSkipProj(xorNode, BinaryOperationNode.LEFT));
+                    Register right = registers.get(predecessorSkipProj(xorNode, BinaryOperationNode.RIGHT));
+                    if (left instanceof x86Registers.OverflowRegisters&& right instanceof x86Registers.OverflowRegisters){
+                        builder.append("  ")
+                                .append("mov ")
+                                .append(x86Registers.RealRegisters.R15D).append(", ")
+                                .append(left).append("\n")
+                                .append("xor ").append(x86Registers.RealRegisters.R15D).append(", ").append(right).append("\n")
+                                .append("mov ").append(target).append(", ").append(x86Registers.RealRegisters.R15D).append("\n");
+                    } else if (right instanceof x86Registers.OverflowRegisters&& right.equals(target)){
+                        builder.append("  ")
+                                .append("mov ")
+                                .append(x86Registers.RealRegisters.R15D).append(", ")
+                                .append(right).append("\n")
+                                .append("xor ").append(x86Registers.RealRegisters.R15D).append(", ").append(left).append("\n")
+                                .append("mov ").append(target).append(", ").append(x86Registers.RealRegisters.R15D).append("\n");
+                    } else {
+                        builder.append("  ")
+                            .append("xor ").append(target).append(", ").append(left).append("\n")
+                            .append("  ")
+                            .append("xor ").append(target).append(", ").append(right).append("\n");
+                    }
                 }
                 default -> {
                     builder.append("errror : not implemented node type: ")
