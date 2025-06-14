@@ -145,6 +145,14 @@ public class Printer {
                 printTree(unaryOperationTree.expression());
                 print(")");
             }
+            case TernaryOperationTree ternaryOperationTree -> {
+                print("(");
+                printTree(ternaryOperationTree.condition());
+                print(") ? ");
+                printTree(ternaryOperationTree.thenExpression());
+                print(" : ");
+                printTree(ternaryOperationTree.elseExpression());
+            }
             default -> {
                 throw new IllegalArgumentException("Unknown tree type: " + tree.getClass().getSimpleName());
             }

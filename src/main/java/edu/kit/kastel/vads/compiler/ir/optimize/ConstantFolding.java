@@ -1,13 +1,6 @@
 package edu.kit.kastel.vads.compiler.ir.optimize;
 
-import edu.kit.kastel.vads.compiler.ir.node.BinaryOperationNode;
-import edu.kit.kastel.vads.compiler.ir.node.Node;
-import edu.kit.kastel.vads.compiler.ir.node.ConstIntNode;
-import edu.kit.kastel.vads.compiler.ir.node.AddNode;
-import edu.kit.kastel.vads.compiler.ir.node.DivNode;
-import edu.kit.kastel.vads.compiler.ir.node.ModNode;
-import edu.kit.kastel.vads.compiler.ir.node.MulNode;
-import edu.kit.kastel.vads.compiler.ir.node.SubNode;
+import edu.kit.kastel.vads.compiler.ir.node.*;
 
 
 import static edu.kit.kastel.vads.compiler.ir.util.NodeSupport.predecessorSkipProj;
@@ -46,7 +39,37 @@ public class ConstantFolding implements Optimizer {
                             result = leftValue % rightValue;
                         }
                     }
-                    default -> throw new IllegalStateException("Unexpected value: " + binaryOperationNode);
+                    case EqualNode _ -> {
+                        if (leftValue == rightValue) {
+                            return new ConstBoolNode(node.block(), true);
+                        } else {
+                            return new ConstBoolNode(node.block(), false);
+                        }
+                    }
+                    case NotEqualNode _ -> {
+                        if (leftValue != rightValue) {
+                            return new ConstBoolNode(node.block(), true);
+                        } else {
+                            return new ConstBoolNode(node.block(), false);
+                        }
+                    }
+                    case LessThanNode _ -> {
+                        if (leftValue < rightValue) {
+                            return new ConstBoolNode(node.block(), true);
+                        } else {
+                            return new ConstBoolNode(node.block(), false);
+                        }
+                    }
+                    case LessThanOrEqualNode _ -> {
+                        if (leftValue <= rightValue) {
+                            return new ConstBoolNode(node.block(), true);
+                        } else {
+                            return new ConstBoolNode(node.block(), false);
+                        }
+                    }
+                    default -> {
+                        return node;
+                    }
                 }
                 return new ConstIntNode(node.block(), result);
             }
