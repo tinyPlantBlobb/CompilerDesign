@@ -124,11 +124,11 @@ public class x86CodeGenerator {
                                 .append("mov ")
                                 .append(x86Registers.RealRegisters.R15D).append(", ")
                                 .append(left).append("\n");
-                        builder.append("shl ").append(x86Registers.RealRegisters.R15D).append(", ").append(right).append("\n")
+                        builder.append("sal ").append(x86Registers.RealRegisters.R15D).append(", ").append(right).append("\n")
                                 .append("mov ").append(target).append(", ").append(x86Registers.RealRegisters.R15D).append("\n");
                     } else {
                         builder.append("  ")
-                                .append("shl ").append(target).append(", ").append(right).append("\n");
+                                .append("sal ").append(target).append(", ").append(right).append("\n");
                     }
                 }
                 case ArithmeticShiftRightNode arithmeticShiftRightNode -> {
@@ -140,11 +140,11 @@ public class x86CodeGenerator {
                                 .append("mov ")
                                 .append(x86Registers.RealRegisters.R15D).append(", ")
                                 .append(left).append("\n");
-                        builder.append("shr ").append(x86Registers.RealRegisters.R15D).append(", ").append(right).append("\n")
+                        builder.append("sar ").append(x86Registers.RealRegisters.R15D).append(", ").append(right).append("\n")
                                 .append("mov ").append(target).append(", ").append(x86Registers.RealRegisters.R15D).append("\n");
                     } else {
                         builder.append("  ")
-                                .append("shr ").append(target).append(", ").append(right).append("\n");
+                                .append("sar ").append(target).append(", ").append(right).append("\n");
                     }
                 }
                 case BitwiseAndNode bitwiseAndNode -> {
@@ -154,22 +154,24 @@ public class x86CodeGenerator {
                     binary(builder, registers, bitwiseOrNode, "or");
                 }
                 case LogicalAndNode logicalAndNode -> {
-                    Register target = registers.get(logicalAndNode);
-                    Register left = registers.get(predecessorSkipProj(logicalAndNode, BinaryOperationNode.LEFT));
-                    Register right = registers.get(predecessorSkipProj(logicalAndNode, BinaryOperationNode.RIGHT));
-                    builder.append("  ")
-                        .append("mov ").append(target).append(", ").append(left).append("\n")
-                        .append("  ")
-                        .append("and ").append(target).append(", ").append(right).append("\n");
+                    binary( builder, registers, logicalAndNode, "and");
+ //                    Register target = registers.get(logicalAndNode);
+//                    Register left = registers.get(predecessorSkipProj(logicalAndNode, BinaryOperationNode.LEFT));
+//                    Register right = registers.get(predecessorSkipProj(logicalAndNode, BinaryOperationNode.RIGHT));
+//                    builder.append("  ")
+//                        .append("mov ").append(target).append(", ").append(left).append("\n")
+//                        .append("  ")
+//                        .append("and ").append(target).append(", ").append(right).append("\n");
                 }
                 case LogicalOrNode logicalOrNode -> {
-                    Register target = registers.get(logicalOrNode);
-                    Register left = registers.get(predecessorSkipProj(logicalOrNode, BinaryOperationNode.LEFT));
-                    Register right = registers.get(predecessorSkipProj(logicalOrNode, BinaryOperationNode.RIGHT));
-                    builder.append("  ")
-                        .append("mov ").append(target).append(", ").append(left).append("\n")
-                        .append("  ")
-                        .append("or ").append(target).append(", ").append(right).append("\n");
+                    binary( builder, registers, logicalOrNode, "or");
+//                    Register target = registers.get(logicalOrNode);
+//                    Register left = registers.get(predecessorSkipProj(logicalOrNode, BinaryOperationNode.LEFT));
+//                    Register right = registers.get(predecessorSkipProj(logicalOrNode, BinaryOperationNode.RIGHT));
+//                    builder.append("  ")
+//                        .append("mov ").append(target).append(", ").append(left).append("\n")
+//                        .append("  ")
+//                        .append("or ").append(target).append(", ").append(right).append("\n");
                 }
                 case LogicalShiftLeftNode logicalShiftLeftNode -> {
                     Register target = registers.get(logicalShiftLeftNode);
@@ -227,6 +229,64 @@ public class x86CodeGenerator {
                             .append("  ")
                             .append("xor ").append(target).append(", ").append(right).append("\n");
                     }
+                }
+                case EqualNode equal -> {
+                    Register target = registers.get(equal);
+                    Register left = registers.get(predecessorSkipProj(equal, BinaryOperationNode.LEFT));
+                    Register right = registers.get(predecessorSkipProj(equal, BinaryOperationNode.RIGHT));
+                    builder.append("  ")
+                        .append("mov ").append(target).append(", ").append(left).append("\n")
+                        .append("  ")
+                        .append("cmp ").append(target).append(", ").append(right).append("\n")
+                        .append("  ")
+                        .append("sete ").append(target).append("\n");
+                }
+                case NotEqualNode notEqual -> {
+                    Register target = registers.get(notEqual);
+                    Register left = registers.get(predecessorSkipProj(notEqual, BinaryOperationNode.LEFT));
+                    Register right = registers.get(predecessorSkipProj(notEqual, BinaryOperationNode.RIGHT));
+                    builder.append("  ")
+                        .append("mov ").append(target).append(", ").append(left).append("\n")
+                        .append("  ")
+                        .append("cmp ").append(target).append(", ").append(right).append("\n")
+                        .append("  ")
+                        .append("setne ").append(target).append("\n");
+                }
+                case LessThanNode lessThan -> {
+                    Register target = registers.get(lessThan);
+                    Register left = registers.get(predecessorSkipProj(lessThan, BinaryOperationNode.LEFT));
+                    Register right = registers.get(predecessorSkipProj(lessThan, BinaryOperationNode.RIGHT));
+                    builder.append("  ")
+                        .append("mov ").append(target).append(", ").append(left).append("\n")
+                        .append("  ")
+                        .append("cmp ").append(target).append(", ").append(right).append("\n")
+                        .append("  ")
+                        .append("setl ").append(target).append("\n");
+                }
+                case LessThanOrEqualNode lessThanOrEqual -> {
+                    Register target = registers.get(lessThanOrEqual);
+                    Register left = registers.get(predecessorSkipProj(lessThanOrEqual, BinaryOperationNode.LEFT));
+                    Register right = registers.get(predecessorSkipProj(lessThanOrEqual, BinaryOperationNode.RIGHT));
+                    builder.append("  ")
+                        .append("mov ").append(target).append(", ").append(left).append("\n")
+                        .append("  ")
+                        .append("cmp ").append(target).append(", ").append(right).append("\n")
+                        .append("  ")
+                        .append("setle ").append(target).append("\n");
+                }
+                case JumpNode jump -> {
+                    Register target = registers.get(jump);
+                    builder.append("  ")
+                        .append("jmp ").append(target).append("\n");
+                }
+                case IfNode ifNode -> {
+                    Register condition = registers.get(ifNode);
+                    builder.append("  ")
+                        .append("cmp ").append(condition).append(", 0\n")
+                        .append("  ")
+                        .append("je ").append("elseBlock").append("\n")
+                        .append("  ")
+                        .append("jmp ").append("thenBlock").append("\n");
                 }
                 default -> {
                     builder.append("errror : not implemented node type: ")
