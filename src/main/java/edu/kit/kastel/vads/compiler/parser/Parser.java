@@ -29,6 +29,7 @@ public class Parser {
     private FunctionTree parseFunction() {
         TypeTree returnType = parseType();
         Identifier identifier = this.tokenSource.expectIdentifier();
+        // add stuff ofr functions later here
         this.tokenSource.expectSeparator(SeparatorType.PAREN_OPEN);
         this.tokenSource.expectSeparator(SeparatorType.PAREN_CLOSE);
         BlockTree body = parseBlock();
@@ -53,13 +54,17 @@ public class Parser {
         StatementTree statement;
         if (this.tokenSource.peek().isKeyword(KeywordType.INT) || this.tokenSource.peek().isKeyword(KeywordType.BOOL)) {
             statement = parseDeclaration();
+            System.out.println("Parsed decl: " + statement);
         } else if (this.tokenSource.peek().isControlFlow()) {
             statement = parseControlFlow();
+            System.out.println("Parsed ctrl f: " + statement);
         }
-        else if (this.tokenSource.peek().isKeyword(KeywordType.RETURN)) {
-            statement = parseReturn();
+        else if (this.tokenSource.peek().isSeparator(SeparatorType.BRACE_OPEN)) {
+            statement = parseBlock();
+            System.out.println("Parsed block: " + statement);
         } else {
             statement = parseSimple();
+            System.out.println("Parsed simple statement: " + statement);
         }
         this.tokenSource.expectSeparator(SeparatorType.SEMICOLON);
         return statement;
@@ -126,11 +131,6 @@ public class Parser {
         return new LValueIdentTree(name(identifier));
     }
 
-    private StatementTree parseReturn() {
-        Keyword ret = this.tokenSource.expectKeyword(KeywordType.RETURN);
-        ExpressionTree expression = parseExpression();
-        return new ReturnTree(expression, ret.span().start());
-    }
 
     private ExpressionTree parseExpression() {
         ExpressionTree lhs = parsePrecedenceExpression(OperatorType.MAX_PRECEDENCE);
@@ -143,11 +143,13 @@ public class Parser {
                     return new TernaryOperationTree(lhs, trueExpression, falseExpression);
                 }
             else {
+                System.out.println("returnning Expression lhs "+lhs);
                 return lhs;
             }
 
     }
     private ExpressionTree parsePrecedenceExpression(int precedence) {
+
         if (precedence == OperatorType.UNARY_PRECEDENCE) {
             return parseUnaryExpression(precedence);
         } else if (precedence == 0) {
@@ -155,12 +157,16 @@ public class Parser {
         }
         ExpressionTree lhs = parsePrecedenceExpression(precedence - 1);
         while (true) {
+            System.out.println("next precedence" +this.tokenSource.peek());
             if (this.tokenSource.peek() instanceof Operator(var type, _)
                 && type.precedence().contains(precedence)) {
                 this.tokenSource.consume();
+                System.out.println("Parsing binary operation with precedence " + precedence + " and type " + type);
                 lhs = new BinaryOperationTree(lhs, parsePrecedenceExpression(precedence - 1), type);
+                System.out.println(Printer.print(lhs));
             } else {
                 return lhs;
+
             }
         }
     }
@@ -189,7 +195,7 @@ public class Parser {
         }
     }
     private ExpressionTree parseUnaryExpression(int precedence) {
-        System.out.println(this.tokenSource.peek());
+        System.out.println("Unary Expression first token" +this.tokenSource.peek());
         if (this.tokenSource.peek() instanceof Operator(var type, _)
             && type.precedence().contains(precedence)) {
             Operator token = this.tokenSource.expectOperator(type);
@@ -197,7 +203,7 @@ public class Parser {
             ExpressionTree operand = parsePrecedenceExpression(precedence);
             return new UnaryOperationTree(token, operand);
         } else {
-            return parseTerm();
+            return parsePrecedenceExpression(precedence-1);
         }
     }
 
@@ -214,18 +220,6 @@ public class Parser {
         }
     }
 
-    private ExpressionTree parseTerm() {
-        ExpressionTree lhs = parseFactor();
-        while (true) {
-            if (this.tokenSource.peek() instanceof Operator(var type, _)
-                && (type == OperatorType.MUL || type == OperatorType.DIV || type == OperatorType.MOD)) {
-                this.tokenSource.consume();
-                lhs = new BinaryOperationTree(lhs, parseFactor(), type);
-            } else {
-                return lhs;
-            }
-        }
-    }
     private ControlFlowTree parseControlFlow() {
         Token token = this.tokenSource.peek();
         System.out.println("Control flow token: " + token);
@@ -266,7 +260,7 @@ public class Parser {
                 this.tokenSource.expectSeparator(SeparatorType.SEMICOLON);
                 ExpressionTree condition = parseExpression();
                 System.out.println("condition node "+condition);
-                //this.tokenSource.expectSeparator(SeparatorType.SEMICOLON);
+                this.tokenSource.expectSeparator(SeparatorType.SEMICOLON);
                 StatementTree step = parseStatement();
                 this.tokenSource.expectSeparator(SeparatorType.PAREN_CLOSE);
                 StatementTree body = parseStatement();
@@ -286,7 +280,6 @@ public class Parser {
             case Keyword(var type, Span span) when type == KeywordType.RETURN -> {
                 this.tokenSource.expectKeyword(KeywordType.RETURN);
                 ExpressionTree expression = parseExpression();
-                this.tokenSource.expectSeparator(SeparatorType.SEMICOLON);
                 return new ReturnTree(expression, span.start());
             }
             default -> throw new ParseException("expected control flow but got " + token);
@@ -295,33 +288,6 @@ public class Parser {
     }
 
 
-    private ExpressionTree parseFactor() {
-        return switch (this.tokenSource.peek()) {
-            case Separator(var type, _) when type == SeparatorType.PAREN_OPEN -> {
-                this.tokenSource.consume();
-                ExpressionTree expression = parseExpression();
-                this.tokenSource.expectSeparator(SeparatorType.PAREN_CLOSE);
-                yield expression;
-            }
-            case Operator(var type, _) when type == OperatorType.MINUS -> {
-                Span span = this.tokenSource.consume().span();
-                yield new NegateTree(parseFactor(), span);
-            }
-            case Identifier ident -> {
-                this.tokenSource.consume();
-                yield new IdentExpressionTree(name(ident));
-            }
-            case NumberLiteral(String value, int base, Span span) -> {
-                this.tokenSource.consume();
-                yield new LiteralIntTree(value, base, span);
-            }
-            case Keyword(var type, Span span) when type == KeywordType.TRUE||type==KeywordType.FALSE -> {
-                this.tokenSource.consume();
-                yield new LiteralBoolTree(new Keyword(type==KeywordType.TRUE? KeywordType.TRUE : KeywordType.FALSE,span));
-            }
-            case Token t -> throw new ParseException("invalid factor " + t);
-        };
-    }
 
     private static NameTree name(Identifier ident) {
         return new NameTree(Name.forIdentifier(ident), ident.span());
