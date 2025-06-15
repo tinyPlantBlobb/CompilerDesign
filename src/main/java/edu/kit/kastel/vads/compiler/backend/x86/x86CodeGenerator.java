@@ -210,6 +210,30 @@ public class x86CodeGenerator {
                         .append("  ")
                         .append("je ").append(thenBlock).append("\n");
                 }
+                case BitwiseNotNode bitwiseNotNode -> {
+                    Register target = registers.get(bitwiseNotNode);
+                    Register value = registers.get(predecessorSkipProj(bitwiseNotNode, 0));
+
+                    if (target instanceof x86Registers.OverflowRegisters){
+                        builder.append("  ")
+                                .append("mov ")
+                                .append(x86Registers.RealRegisters.R15D).append(", ")
+                                .append(value).append("\n")
+                                .append("NEG ").append(x86Registers.RealRegisters.R15D).append("\n")
+                                .append("mov ").append(target).append(", ").append(x86Registers.RealRegisters.R15D).append("\n");
+                    } else {
+                        builder.append("  ")
+                            .append("mov ").append(target).append(", ").append(value).append("\n")
+                                .append("NEG ").append(target).append("\n");
+                    }
+                }
+                case LogicalNotNode logicalNotNode -> {
+                    Register target = registers.get(logicalNotNode);
+                    Register value = registers.get(predecessorSkipProj(logicalNotNode, 0));
+                    builder.append("  ").append("mov ").append(target).append(", ")
+                        .append(registers.get(predecessorSkipProj(logicalNotNode, 0))).append(", 0\n")
+                            .append("NOT ").append(target).append("\n");
+                }
                 case Phi phiNode ->{
                     int predecessorIndex = -1;
                     List<? extends Node> predecessors = node.block().predecessors();
