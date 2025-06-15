@@ -116,36 +116,10 @@ public class x86CodeGenerator {
                     // do nothing, skip line break
                 }
                 case ArithmeticShiftLeftNode arithmeticShiftLeftNode -> {
-                    Register target = registers.get(arithmeticShiftLeftNode);
-                    Register left = registers.get(predecessorSkipProj(arithmeticShiftLeftNode, BinaryOperationNode.LEFT));
-                    Register right = registers.get(predecessorSkipProj(arithmeticShiftLeftNode, BinaryOperationNode.RIGHT));
-                    if (left instanceof x86Registers.OverflowRegisters){
-                        builder.append("  ")
-                                .append("mov ")
-                                .append(x86Registers.RealRegisters.R15D).append(", ")
-                                .append(left).append("\n");
-                        builder.append("sal ").append(x86Registers.RealRegisters.R15D).append(", ").append(right).append("\n")
-                                .append("mov ").append(target).append(", ").append(x86Registers.RealRegisters.R15D).append("\n");
-                    } else {
-                        builder.append("  ")
-                                .append("sal ").append(target).append(", ").append(right).append("\n");
-                    }
+                    shiftNode(builder, registers, arithmeticShiftLeftNode, "sal");
                 }
                 case ArithmeticShiftRightNode arithmeticShiftRightNode -> {
-                    Register target = registers.get(arithmeticShiftRightNode);
-                    Register left = registers.get(predecessorSkipProj(arithmeticShiftRightNode, BinaryOperationNode.LEFT));
-                    Register right = registers.get(predecessorSkipProj(arithmeticShiftRightNode, BinaryOperationNode.RIGHT));
-                    if (left instanceof x86Registers.OverflowRegisters){
-                        builder.append("  ")
-                                .append("mov ")
-                                .append(x86Registers.RealRegisters.R15D).append(", ")
-                                .append(left).append("\n");
-                        builder.append("sar ").append(x86Registers.RealRegisters.R15D).append(", ").append(right).append("\n")
-                                .append("mov ").append(target).append(", ").append(x86Registers.RealRegisters.R15D).append("\n");
-                    } else {
-                        builder.append("  ")
-                                .append("sar ").append(target).append(", ").append(right).append("\n");
-                    }
+                    shiftNode(builder, registers, arithmeticShiftRightNode, "sar");
                 }
                 case BitwiseAndNode bitwiseAndNode -> {
                     binary(builder, registers, bitwiseAndNode, "and");
@@ -155,55 +129,14 @@ public class x86CodeGenerator {
                 }
                 case LogicalAndNode logicalAndNode -> {
                     binary( builder, registers, logicalAndNode, "and");
- //                    Register target = registers.get(logicalAndNode);
-//                    Register left = registers.get(predecessorSkipProj(logicalAndNode, BinaryOperationNode.LEFT));
-//                    Register right = registers.get(predecessorSkipProj(logicalAndNode, BinaryOperationNode.RIGHT));
-//                    builder.append("  ")
-//                        .append("mov ").append(target).append(", ").append(left).append("\n")
-//                        .append("  ")
-//                        .append("and ").append(target).append(", ").append(right).append("\n");
                 }
                 case LogicalOrNode logicalOrNode -> {
-                    binary( builder, registers, logicalOrNode, "or");
-//                    Register target = registers.get(logicalOrNode);
-//                    Register left = registers.get(predecessorSkipProj(logicalOrNode, BinaryOperationNode.LEFT));
-//                    Register right = registers.get(predecessorSkipProj(logicalOrNode, BinaryOperationNode.RIGHT));
-//                    builder.append("  ")
-//                        .append("mov ").append(target).append(", ").append(left).append("\n")
-//                        .append("  ")
-//                        .append("or ").append(target).append(", ").append(right).append("\n");
-                }
+                    binary( builder, registers, logicalOrNode, "or");                }
                 case LogicalShiftLeftNode logicalShiftLeftNode -> {
-                    Register target = registers.get(logicalShiftLeftNode);
-                    Register left = registers.get(predecessorSkipProj(logicalShiftLeftNode, BinaryOperationNode.LEFT));
-                    Register right = registers.get(predecessorSkipProj(logicalShiftLeftNode, BinaryOperationNode.RIGHT));
-                    if (left instanceof x86Registers.OverflowRegisters){
-                        builder.append("  ")
-                                .append("mov ")
-                                .append(x86Registers.RealRegisters.R15D).append(", ")
-                                .append(left).append("\n");
-                        builder.append("shl ").append(x86Registers.RealRegisters.R15D).append(", ").append(right).append("\n")
-                                .append("mov ").append(target).append(", ").append(x86Registers.RealRegisters.R15D).append("\n");
-                    } else {
-                        builder.append("  ")
-                                .append("shl ").append(target).append(", ").append(right).append("\n");
-                    }
+                    shiftNode(builder, registers, logicalShiftLeftNode, "shl");
                 }
                 case LogicalShiftRightNode logicalShiftRightNode -> {
-                    Register target = registers.get(logicalShiftRightNode);
-                    Register left = registers.get(predecessorSkipProj(logicalShiftRightNode, BinaryOperationNode.LEFT));
-                    Register right = registers.get(predecessorSkipProj(logicalShiftRightNode, BinaryOperationNode.RIGHT));
-                    if (left instanceof x86Registers.OverflowRegisters){
-                        builder.append("  ")
-                                .append("mov ")
-                                .append(x86Registers.RealRegisters.R15D).append(", ")
-                                .append(left).append("\n");
-                        builder.append("shr ").append(x86Registers.RealRegisters.R15D).append(", ").append(right).append("\n")
-                                .append("mov ").append(target).append(", ").append(x86Registers.RealRegisters.R15D).append("\n");
-                    } else {
-                        builder.append("  ")
-                                .append("shr ").append(target).append(", ").append(right).append("\n");
-                    }
+                   shiftNode(builder, registers, logicalShiftRightNode, "shr");
                 }
                 case XorNode xorNode -> {
                     Register target = registers.get(xorNode);
@@ -296,11 +229,28 @@ public class x86CodeGenerator {
             }
 
         }
-
         builder.append("\n");
     }
 
-  private static void binary(
+    private void shiftNode(StringBuilder builder, Map<Node, Register> registers, BinaryOperationNode shiftNode, String opcode) {
+        Register target = registers.get(shiftNode);
+        Register left = registers.get(predecessorSkipProj(shiftNode, BinaryOperationNode.LEFT));
+        int right = ((ConstIntNode)predecessorSkipProj(shiftNode, BinaryOperationNode.RIGHT)).value();
+        if (left instanceof x86Registers.OverflowRegisters){
+            builder.append("  ")
+                    .append("mov ")
+                    .append(x86Registers.RealRegisters.R15D).append(", ")
+                    .append(left).append("\n");
+            builder.append(opcode).append(" ").append(x86Registers.RealRegisters.R15D).append(", ").append(right).append("\n")
+                    .append("mov ").append(target).append(", ").append(x86Registers.RealRegisters.R15D).append("\n");
+        } else {
+            builder.append("  ")
+                    .append(opcode).append(" ").append(left).append(", ").append(right).append("\n")
+                    .append("mov ").append(target).append(", ").append(left).append("\n");
+        }
+    }
+
+    private static void binary(
       StringBuilder builder,
       Map<Node, Register> registers,
       BinaryOperationNode node,
