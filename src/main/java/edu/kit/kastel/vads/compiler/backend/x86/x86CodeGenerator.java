@@ -18,25 +18,25 @@ public class x86CodeGenerator {
         StringBuilder builder = new StringBuilder();
         builder.append(prologue());
 
-            FileWriter file = new FileWriter("graphs/test1.vcg", false);
+            //FileWriter file = new FileWriter("graphs/test1.vcg", false);
 
         for (IrGraph graph : program) {
             x86RegisterAllocator allocator = new x86RegisterAllocator(graph);
             Map<Node, Register> registers = allocator.allocateRegisters(graph);
 
-            try {
-                FileWriter registerfile = new FileWriter("register.txt", true);
-                file.write(YCompPrinter.print(graph));
-
-                registerfile.write(graph.name()+":\n");
-                registerfile.write( registers.keySet().stream()
-                        .map(key -> key + "=" + registers.get(key)+"\n")
-                        .collect(Collectors.joining(", ", "{", "}")));
-                file.close();
-                registerfile.close();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+//            try {
+//                FileWriter registerfile = new FileWriter("register.txt", true);
+//                file.write(YCompPrinter.print(graph));
+//
+//                registerfile.write(graph.name()+":\n");
+//                registerfile.write( registers.keySet().stream()
+//                        .map(key -> key + "=" + registers.get(key)+"\n")
+//                        .collect(Collectors.joining(", ", "{", "}")));
+//                file.close();
+//                registerfile.close();
+//            } catch (IOException e) {
+//                throw new RuntimeException(e);
+//            }
 
             if (graph.name().equals("main")) {
                 builder.append(generatePrologue("_main"));
@@ -80,7 +80,7 @@ public class x86CodeGenerator {
     private void generateForGraph(IrGraph graph, StringBuilder builder, Map<Node, Register> registers) {
         Node current = graph.startBlock();
         for (Node node : graph.getControlFlowOrder()) {
-            System.out.println(node.toString() + " " + node.hashCode());
+            System.out.println(node + " " + node.hashCode());
             switch (node) {
                 case AddNode add -> binary(builder, registers, add, "add");
                 case SubNode sub -> subtract(builder, registers, sub, "sub");
@@ -104,30 +104,14 @@ public class x86CodeGenerator {
                         .append("  ret\n");
                 case ConstIntNode c -> builder.append("mov ").append(registers.get(c)).append(", ").append(c.value()).append("\n");
                 case ConstBoolNode c -> builder.append("mov ").append(registers.get(c)).append(", ").append(c.value() ? 1 : 0).append("\n");
-
-                case ArithmeticShiftLeftNode arithmeticShiftLeftNode -> {
-                    shiftNode(builder, registers, arithmeticShiftLeftNode, "sal");
-                }
-                case ArithmeticShiftRightNode arithmeticShiftRightNode -> {
-                    shiftNode(builder, registers, arithmeticShiftRightNode, "sar");
-                }
-                case BitwiseAndNode bitwiseAndNode -> {
-                    binary(builder, registers, bitwiseAndNode, "and");
-                }
-                case BitwiseOrNode bitwiseOrNode -> {
-                    binary(builder, registers, bitwiseOrNode, "or");
-                }
-                case LogicalAndNode logicalAndNode -> {
-                    binary( builder, registers, logicalAndNode, "and");
-                }
-                case LogicalOrNode logicalOrNode -> {
-                    binary( builder, registers, logicalOrNode, "or");                }
-                case LogicalShiftLeftNode logicalShiftLeftNode -> {
-                    shiftNode(builder, registers, logicalShiftLeftNode, "shl");
-                }
-                case LogicalShiftRightNode logicalShiftRightNode -> {
-                   shiftNode(builder, registers, logicalShiftRightNode, "shr");
-                }
+                case ArithmeticShiftLeftNode arithmeticShiftLeftNode -> shiftNode(builder, registers, arithmeticShiftLeftNode, "sal");
+                case ArithmeticShiftRightNode arithmeticShiftRightNode -> shiftNode(builder, registers, arithmeticShiftRightNode, "sar");
+                case BitwiseAndNode bitwiseAndNode -> binary(builder, registers, bitwiseAndNode, "and");
+                case BitwiseOrNode bitwiseOrNode -> binary(builder, registers, bitwiseOrNode, "or");
+                case LogicalAndNode logicalAndNode -> binary( builder, registers, logicalAndNode, "and");
+                case LogicalOrNode logicalOrNode -> binary( builder, registers, logicalOrNode, "or");
+                case LogicalShiftLeftNode logicalShiftLeftNode -> shiftNode(builder, registers, logicalShiftLeftNode, "shl");
+                case LogicalShiftRightNode logicalShiftRightNode -> shiftNode(builder, registers, logicalShiftRightNode, "shr");
                 case XorNode xorNode -> {
                     Register target = registers.get(xorNode);
                     Register left = registers.get(predecessorSkipProj(xorNode, BinaryOperationNode.LEFT));
@@ -213,7 +197,6 @@ public class x86CodeGenerator {
                 case BitwiseNotNode bitwiseNotNode -> {
                     Register target = registers.get(bitwiseNotNode);
                     Register value = registers.get(predecessorSkipProj(bitwiseNotNode, 0));
-
                     if (target instanceof x86Registers.OverflowRegisters){
                         builder.append("  ")
                                 .append("mov ")
@@ -231,7 +214,7 @@ public class x86CodeGenerator {
                     Register target = registers.get(logicalNotNode);
                     Register value = registers.get(predecessorSkipProj(logicalNotNode, 0));
                     builder.append("  ").append("mov ").append(target).append(", ")
-                        .append(registers.get(predecessorSkipProj(logicalNotNode, 0))).append(", 0\n")
+                        .append(value).append("\n")
                             .append("NOT ").append(target).append("\n");
                 }
                 case Phi phiNode ->{
@@ -257,11 +240,9 @@ public class x86CodeGenerator {
                 case Block _, ProjNode _, StartNode _ -> {
                     // do nothing, skip line break
                 }
-                default -> {
-                    builder.append("errror : not implemented node type: ")
-                        .append(node.getClass().getSimpleName())
-                        .append("\n");
-            }
+                default -> builder.append("errror : not implemented node type: ")
+                    .append(node.getClass().getSimpleName())
+                    .append("\n");
             }
             current = node;
         }
