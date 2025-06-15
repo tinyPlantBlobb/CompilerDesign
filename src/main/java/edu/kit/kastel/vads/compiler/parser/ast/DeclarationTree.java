@@ -6,6 +6,7 @@ import edu.kit.kastel.vads.compiler.parser.visitor.Visitor;
 import org.jspecify.annotations.Nullable;
 
 public record DeclarationTree(TypeTree typetree, NameTree name, @Nullable ExpressionTree initializer) implements StatementTree {
+
     public Type type() {
         return typetree.type();
     }

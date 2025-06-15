@@ -7,13 +7,17 @@ import edu.kit.kastel.vads.compiler.Span;
 import edu.kit.kastel.vads.compiler.parser.ast.*;
 import edu.kit.kastel.vads.compiler.parser.symbol.Name;
 import edu.kit.kastel.vads.compiler.parser.type.BasicType;
+import edu.kit.kastel.vads.compiler.parser.type.Type;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class Parser {
     private final TokenSource tokenSource;
     private final List<KeywordType> types  = List.of(KeywordType.INT, KeywordType.BOOL);
+    private static Map<Name, TypeTree> typeMap = new HashMap<>();
     public Parser(TokenSource tokenSource) {
         this.tokenSource = tokenSource;
     }
@@ -96,8 +100,13 @@ public class Parser {
                 expr = parseExpression();
         }
         NameTree name = name(ident);
+        typeMap.put(name.name(), typetree);
         DeclarationTree declarationTree = new DeclarationTree(typetree, name, expr);
-        name.addReference(declarationTree);
+
+//
+//        System.out.println("Parsed declaration "+ident+": " +name.toString() + " "+ references(name) + " nametype " +
+//                references(name)+  " with type " + typetree.type() + " input type " + declarationTree.type());
+
         return declarationTree;
 
     }
@@ -137,7 +146,6 @@ public class Parser {
     private ExpressionTree parseExpression() {
         //System.out.println("Parsed with token " + this.tokenSource.peek());
         ExpressionTree lhs = parsePrecedenceExpression(OperatorType.MAX_PRECEDENCE);
-        //System.out.println("Parsed left hand side: " + Printer.print(lhs)+ " with token " + this.tokenSource.peek());
             if (this.tokenSource.peek().isOperator(OperatorType.TERNARY_CONDITION) ) {
                     this.tokenSource.consume();
                     ExpressionTree trueExpression = parseExpression();
@@ -164,10 +172,12 @@ public class Parser {
             if (this.tokenSource.peek() instanceof Operator(var type, _)
                 && type.precedence().contains(precedence)) {
                 this.tokenSource.consume();
-                //System.out.println("Parsing binary operation with precedence " + precedence + " and type " + type);
+                //System.out.println("Parsing binary operation with type " + lhs.type() + " and lhs " + lhs+ " and reference type " + ((IdentExpressionTree) lhs).name().references().type() + " and operator type " + type);
                 lhs = new BinaryOperationTree(lhs, parsePrecedenceExpression(precedence - 1), type);
-                //System.out.println(Printer.print(lhs));
+
             } else {
+
+
                 return lhs;
 
             }
@@ -184,7 +194,8 @@ public class Parser {
             }
             case Identifier ident -> {
                 this.tokenSource.consume();
-                return new IdentExpressionTree(name(ident));
+                IdentExpressionTree identExpression = new IdentExpressionTree(name(ident));
+                return identExpression;
             }
             case NumberLiteral(String value, int base, Span span) -> {
                 this.tokenSource.consume();
@@ -292,9 +303,16 @@ public class Parser {
 
     }
 
-
+    public static Type references(NameTree name) {
+        TypeTree type = typeMap.get(name.name());
+        if (type == null) {
+            throw new ParseException("Type for " + name + " not found in type map");
+        }
+        return type.type();
+    }
 
     private static NameTree name(Identifier ident) {
         return new NameTree(Name.forIdentifier(ident), ident.span());
     }
+
 }

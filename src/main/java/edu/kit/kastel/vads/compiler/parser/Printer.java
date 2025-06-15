@@ -48,7 +48,7 @@ public class Printer {
                 space();
                 printTree(body);
             }
-            case NameTree(var name, _) -> print(name.asString());
+            case NameTree name -> print(name.name().asString());
             case ProgramTree(var topLevelTrees) -> {
                 for (FunctionTree function : topLevelTrees) {
                     printTree(function);

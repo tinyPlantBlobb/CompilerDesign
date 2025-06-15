@@ -1,15 +1,17 @@
 package edu.kit.kastel.vads.compiler.parser.ast;
 
 import edu.kit.kastel.vads.compiler.Span;
+import edu.kit.kastel.vads.compiler.parser.Parser;
 import edu.kit.kastel.vads.compiler.parser.type.Type;
 import edu.kit.kastel.vads.compiler.parser.visitor.Visitor;
 
 public record IdentExpressionTree(NameTree name) implements ExpressionTree {
+
     @Override
     public Type type() {
-        return name.references.type();
-    }
 
+        return Parser.references(name);
+    }
     @Override
     public Span span() {
         return name().span();

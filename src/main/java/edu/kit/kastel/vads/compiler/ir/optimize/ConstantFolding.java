@@ -72,6 +72,20 @@ public class ConstantFolding implements Optimizer {
                     }
                 }
                 return new ConstIntNode(node.block(), result);
+            } else if (left instanceof ConstBoolNode && right instanceof ConstBoolNode) {
+                boolean leftValue = ((ConstBoolNode) left).value();
+                boolean rightValue = ((ConstBoolNode) right).value();
+                boolean result;
+                switch (binaryOperationNode) {
+                    case LogicalAndNode _ -> result = leftValue && rightValue;
+                    case LogicalOrNode _ -> result = leftValue || rightValue;
+                    case EqualNode _ -> result = leftValue == rightValue;
+                    case NotEqualNode _ -> result = leftValue != rightValue;
+                    default -> {
+                        return node;
+                    }
+                }
+                return new ConstBoolNode(node.block(), result);
             }
         }
         return node;

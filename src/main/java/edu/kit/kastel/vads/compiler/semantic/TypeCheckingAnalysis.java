@@ -1,6 +1,7 @@
 package edu.kit.kastel.vads.compiler.semantic;
 
 import edu.kit.kastel.vads.compiler.lexer.Operator;
+import edu.kit.kastel.vads.compiler.parser.Parser;
 import edu.kit.kastel.vads.compiler.parser.Printer;
 import edu.kit.kastel.vads.compiler.parser.ast.*;
 import edu.kit.kastel.vads.compiler.parser.type.Type;
@@ -8,7 +9,6 @@ import edu.kit.kastel.vads.compiler.parser.visitor.NoOpVisitor;
 import edu.kit.kastel.vads.compiler.parser.visitor.Unit;
 
 import java.util.List;
-//TODO: Implement type checking logic for the various AST nodes.
 public class TypeCheckingAnalysis implements NoOpVisitor<List<ReturnTree>> {
     @Override
     public Unit visit(FunctionTree functionTree, List<ReturnTree> data) {
@@ -50,7 +50,8 @@ public class TypeCheckingAnalysis implements NoOpVisitor<List<ReturnTree>> {
         Type inputType = binaryOperationTree.operatorType().inputType();
         if (inputType!=null) {
             if (!lhsType.equals(inputType) || !rhsType.equals(inputType)) {
-                throw new SemanticException("Type mismatch in binary operation: " + binaryOperationTree);
+                throw new SemanticException("Type mismatch in binary operation: " + binaryOperationTree+
+                        " expected " + inputType + " but got " + lhsType + " and " + rhsType);
             }
         }
         return NoOpVisitor.super.visit(binaryOperationTree, data);
@@ -60,7 +61,7 @@ public class TypeCheckingAnalysis implements NoOpVisitor<List<ReturnTree>> {
     @Override
     public Unit visit(AssignmentTree assignmentTree, List<ReturnTree> data) {
         // Check assignments
-        Type lValueType = ((LValueIdentTree)assignmentTree.lValue()).name().references.type();
+        Type lValueType = Parser.references(((LValueIdentTree)assignmentTree.lValue()).name());
         Operator.OperatorType opType = assignmentTree.operator().type();
         Type expressionType = assignmentTree.expression().type();
         if (!lValueType.equals(expressionType)) {
@@ -68,7 +69,7 @@ public class TypeCheckingAnalysis implements NoOpVisitor<List<ReturnTree>> {
         }
         if (opType != Operator.OperatorType.ASSIGN) {
             if(!opType.inputType().equals(lValueType)) {
-                throw new SemanticException("Type mismatch for operator"+ opType +" and value " + lValueType);
+                throw new SemanticException("Type mismatch for operator "+ opType+ " which wants type "+ opType.inputType() +" and value " + lValueType);
             }
         }
         return NoOpVisitor.super.visit(assignmentTree, data);
