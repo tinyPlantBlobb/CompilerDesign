@@ -263,6 +263,7 @@ public class SsaTranslation {
       return Optional.empty();
     }
 
+
     @Override
     public Optional<Node> visit(UnaryOperationTree unaryOperationTree, SsaTranslation data) {
       pushSpan(unaryOperationTree);

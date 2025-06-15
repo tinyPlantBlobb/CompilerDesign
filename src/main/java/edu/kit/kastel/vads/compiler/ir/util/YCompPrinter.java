@@ -163,9 +163,11 @@ public class YCompPrinter {
         for (Node parent : parents) {
             if (parent instanceof ReturnNode) {
                 // Return needs no label
-                result.add(formatControlflowEdge(parent, block, ""));
-            } else {
-                throw new RuntimeException("Unknown paren type: " + parent);
+                result.add(formatControlflowEdge(parent, block, String.valueOf(parents.indexOf(parent))));
+            } else if (parent instanceof JumpNode || parent instanceof IfNode || parent instanceof ProjNode && (SimpleProjectionInfo.IF_FALSE== ((ProjNode) parent).projectionInfo()|| SimpleProjectionInfo.IF_TRUE == ((ProjNode) parent).projectionInfo())) {
+                    result.add(formatControlflowEdge(parent, block, String.valueOf(parents.indexOf(parent))));
+                }
+                else {throw new RuntimeException("Unknown paren type: " + parent);
             }
         }
 
@@ -228,6 +230,7 @@ public class YCompPrinter {
             case BitwiseNotNode bitwiseNotNode -> VcgColor.NORMAL;
             case LogicalNotNode logicalNotNode ->VcgColor.NORMAL;
             case IfNode ifNode -> VcgColor.CONTROL_FLOW;
+            case NoDefNode noDefNode -> VcgColor.NORMAL;
             default -> throw new RuntimeException("Unknown node: " + node);
         };
     }

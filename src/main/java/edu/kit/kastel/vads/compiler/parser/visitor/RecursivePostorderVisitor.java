@@ -1,5 +1,5 @@
 package edu.kit.kastel.vads.compiler.parser.visitor;
-
+import edu.kit.kastel.vads.compiler.ir.node.NoDefNode;
 import edu.kit.kastel.vads.compiler.parser.ast.*;
 
 /// A visitor that traverses a tree in postorder
@@ -141,9 +141,16 @@ public class RecursivePostorderVisitor<T, R> implements Visitor<T, R> {
 
     @Override
     public R visit(ForTree forTree, T data) {
-        R r = forTree.initialisation().accept(this, data);
-        r = forTree.condition().accept(this, accumulate(data, r));
-        r = forTree.step().accept(this, accumulate(data, r));
+        R r;
+        if (forTree.initialisation() != null) {
+            r = forTree.initialisation().accept(this, data);
+            r = forTree.condition().accept(this, accumulate(data, r));
+        }   else {
+            r = forTree.condition().accept(this, data);
+        }
+        if (forTree.step() != null) {
+            r = forTree.step().accept(this, accumulate(data, r));
+        }
         r = forTree.loopBody().accept(this, accumulate(data, r));
         r = this.visitor.visit(forTree, accumulate(data, r));
         return r;
@@ -168,6 +175,8 @@ public class RecursivePostorderVisitor<T, R> implements Visitor<T, R> {
         R r = this.visitor.visit(continueTree, data);
         return r;
     }
+
+
     @Override
     public R visit(UnaryOperationTree unaryOperationTree, T data) {
         R r = unaryOperationTree.expression().accept(this, data);

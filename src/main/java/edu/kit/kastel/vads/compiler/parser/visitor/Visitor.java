@@ -1,5 +1,6 @@
 package edu.kit.kastel.vads.compiler.parser.visitor;
 
+import edu.kit.kastel.vads.compiler.ir.node.NoDefNode;
 import edu.kit.kastel.vads.compiler.parser.ast.*;
 
 public interface Visitor<T, R> {

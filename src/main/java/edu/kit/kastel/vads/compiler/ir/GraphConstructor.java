@@ -169,10 +169,24 @@ public Node newRightShift(Node left, Node right) {
     }
 
     Node tryRemoveTrivialPhi(Phi phi) {
-        // TODO: the paper shows how to remove trivial phis.
-        // as this is not a problem in Lab 1 and it is just
-        // a simplification, we recommend to implement this
-        // part yourself.
+        Set<Node> predecessorsOfPhi = new HashSet<>(phi.predecessors());
+        predecessorsOfPhi.remove(phi);
+        if (predecessorsOfPhi.isEmpty()) {
+            return new NoDefNode(phi.block()); // no predecessors, so this phi is not needed
+        } else if (predecessorsOfPhi.size() == 1) {
+            Node replacement = predecessorsOfPhi.iterator().next();
+            for (Node successor : graph.successors(phi)) {
+                for (int i = 0; i < successor.predecessors().size(); i++) {
+                    successor.setPredecessor(i, replacement);
+                    if (successor instanceof Phi && sealedBlocks.contains(successor.block())) {
+                        tryRemoveTrivialPhi((Phi) successor); // recursively remove trivial phis in successors
+                    }
+                }
+            }
+            return replacement;
+        }
+
+
         return phi;
     }
 

@@ -2,11 +2,13 @@ package edu.kit.kastel.vads.compiler.backend.x86;
 import edu.kit.kastel.vads.compiler.backend.regalloc.Register;
 import edu.kit.kastel.vads.compiler.ir.IrGraph;
 import edu.kit.kastel.vads.compiler.ir.node.*;
+import edu.kit.kastel.vads.compiler.ir.util.YCompPrinter;
 
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static edu.kit.kastel.vads.compiler.ir.util.NodeSupport.predecessorSkipProj;
 
@@ -15,24 +17,26 @@ public class x86CodeGenerator {
     public String generateCode(List<IrGraph> program) throws IOException {
         StringBuilder builder = new StringBuilder();
         builder.append(prologue());
+
+            FileWriter file = new FileWriter("graphs/test1.vcg", false);
+
         for (IrGraph graph : program) {
             x86RegisterAllocator allocator = new x86RegisterAllocator(graph);
             Map<Node, Register> registers = allocator.allocateRegisters(graph);
-//
-//            try {
-//                FileWriter file = new FileWriter("graph.vcg", true);
-//                FileWriter registerfile = new FileWriter("register.txt", true);
-//                file.write(GraphVizPrinter.print(graph));
-//
-//                registerfile.write(graph.name()+":\n");
-//                registerfile.write(registers.keySet().stream()
-//                        .map(key -> key + "=" + registers.get(key)+"\n")
-//                        .collect(Collectors.joining(", ", "{", "}")));
-//                file.close();
-//                registerfile.close();
-//            } catch (IOException e) {
-//                throw new RuntimeException(e);
-//            }
+
+            try {
+                FileWriter registerfile = new FileWriter("register.txt", true);
+                file.write(YCompPrinter.print(graph));
+
+                registerfile.write(graph.name()+":\n");
+                registerfile.write( registers.keySet().stream()
+                        .map(key -> key + "=" + registers.get(key)+"\n")
+                        .collect(Collectors.joining(", ", "{", "}")));
+                file.close();
+                registerfile.close();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
 
             if (graph.name().equals("main")) {
                 builder.append(generatePrologue("_main"));
@@ -74,20 +78,9 @@ public class x86CodeGenerator {
     }
 
     private void generateForGraph(IrGraph graph, StringBuilder builder, Map<Node, Register> registers) {
-//        Set<Node> visited = new HashSet<>();
-//        scanfornodes(graph.endBlock(), visited, builder, registers);
-//    }
-//
-//    private void scanfornodes(Node node, Set<Node> visited, StringBuilder builder, Map<Node, Register> registers) {
-//        for (Node predecessor : node.predecessors()) {
-//            if (!visited.contains(predecessor)) {
-//                visited.add(predecessor);
-//                scanfornodes(predecessor, visited, builder, registers);
-//
-//            }
-//        }
+        Node current = graph.startBlock();
         for (Node node : graph.getControlFlowOrder()) {
-
+            System.out.println(node.toString() + " " + node.hashCode());
             switch (node) {
                 case AddNode add -> binary(builder, registers, add, "add");
                 case SubNode sub -> subtract(builder, registers, sub, "sub");
@@ -111,10 +104,7 @@ public class x86CodeGenerator {
                         .append("  ret\n");
                 case ConstIntNode c -> builder.append("mov ").append(registers.get(c)).append(", ").append(c.value()).append("\n");
                 case ConstBoolNode c -> builder.append("mov ").append(registers.get(c)).append(", ").append(c.value() ? 1 : 0).append("\n");
-                case Phi _ -> throw new UnsupportedOperationException("phi");
-                case Block _, ProjNode _, StartNode _ -> {
-                    // do nothing, skip line break
-                }
+
                 case ArithmeticShiftLeftNode arithmeticShiftLeftNode -> {
                     shiftNode(builder, registers, arithmeticShiftLeftNode, "sal");
                 }
@@ -208,18 +198,40 @@ public class x86CodeGenerator {
                         .append("setle ").append(target).append("\n");
                 }
                 case JumpNode jump -> {
-                    Register target = registers.get(jump);
+                    String targetName = String.valueOf(jump.targetBlock.hashCode());
                     builder.append("  ")
-                        .append("jmp ").append(target).append("\n");
+                        .append("jmp ").append(targetName).append("\n");
                 }
                 case IfNode ifNode -> {
+                    String thenBlock = String.valueOf(ifNode.block().hashCode());
                     Register condition = registers.get(ifNode);
                     builder.append("  ")
-                        .append("cmp ").append(condition).append(", 0\n")
+                        .append("cmp ").append(condition).append(", 1\n")
                         .append("  ")
-                        .append("je ").append("elseBlock").append("\n")
-                        .append("  ")
-                        .append("jmp ").append("thenBlock").append("\n");
+                        .append("je ").append(thenBlock).append("\n");
+                }
+                case Phi phiNode ->{
+                    int predecessorIndex = -1;
+                    List<? extends Node> predecessors = node.block().predecessors();
+                    for (int i = 0; i < predecessors.size(); i++) {
+                        System.out.println(i+"  " +predecessors.get(i).hashCode() + " " + current.hashCode());
+                        if (predecessors.get(i).equals(current)) {
+                            predecessorIndex = i;
+                            break;
+                        }
+                    }
+                    if (predecessorIndex == -1) throw new IllegalStateException("Predecessor not found");
+
+                    Node predecessor = node.predecessor(predecessorIndex);
+
+                    Register target = registers.get(phiNode);
+                    Register firstPredecessorRegister = registers.get(predecessor);
+                    builder.append("  ")
+                        .append("mov ").append(target).append(", ").append(firstPredecessorRegister).append("\n");
+                    //throw new UnsupportedOperationException("phi");
+                }
+                case Block _, ProjNode _, StartNode _ -> {
+                    // do nothing, skip line break
                 }
                 default -> {
                     builder.append("errror : not implemented node type: ")
@@ -227,7 +239,7 @@ public class x86CodeGenerator {
                         .append("\n");
             }
             }
-
+            current = node;
         }
         builder.append("\n");
     }
