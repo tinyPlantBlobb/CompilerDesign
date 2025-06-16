@@ -72,7 +72,7 @@ public class x86CodeGenerator {
     private void generateForGraph(IrGraph graph, StringBuilder builder, Map<Node, Register> registers) {
         Node current = graph.startBlock();
         for (Node node : graph.getControlFlowOrder()) {
-            System.out.println(node + " " + node.hashCode() + " " + current.hashCode() + " " + node.block());
+            //System.out.println(node + " " + node.hashCode() + " " + current.hashCode() + " " + node.block() + " " + node.predecessors());
             switch (node) {
                 case AddNode add -> binary(builder, registers, add, "add");
                 case SubNode sub -> subtract(builder, registers, sub, "sub");
@@ -219,10 +219,11 @@ public class x86CodeGenerator {
                 }
                 case Phi phiNode ->{
                     int predecessorIndex = -1;
+                    //System.out.println("append phi: " + node.predecessors());
                     List<? extends Node> predecessors = node.block().predecessors();
                     for (int i = 0; i < predecessors.size(); i++) {
-                        System.out.println(i+"  " +predecessors.get(i).hashCode() + " " + current.hashCode());
-                        if (predecessors.get(i).equals(current)) {
+                        //System.out.println(i+"  " +predecessors.get(i)+ "  " +predecessors.get(i).block() +" " + current.block());
+                        if (predecessors.get(i).block().equals(current.block())) {
                             predecessorIndex = i;
                             break;
                         }
@@ -238,6 +239,7 @@ public class x86CodeGenerator {
                     //throw new UnsupportedOperationException("phi");
                 }
                 case Block b -> {
+                    current = node;
                     System.out.println("append block: " + b.hashCode());
                     builder.append("block").append(b.hashCode()).append(":\n");
                 }
