@@ -2,6 +2,7 @@ package edu.kit.kastel.vads.compiler.semantic;
 
 import edu.kit.kastel.vads.compiler.parser.ParseException;
 import edu.kit.kastel.vads.compiler.parser.ast.*;
+import edu.kit.kastel.vads.compiler.parser.type.BasicType;
 import edu.kit.kastel.vads.compiler.parser.visitor.NoOpVisitor;
 import edu.kit.kastel.vads.compiler.parser.visitor.Unit;
 
@@ -11,7 +12,18 @@ class MainMethodAnalysis implements NoOpVisitor<MainMethodAnalysis.MainMethodSta
         @Override
         public Unit visit(ProgramTree tree, MainMethodState data) {
             if (tree.topLevelTrees().stream().anyMatch(f->f.name().name().asString().equals(MAIN_METHOD_NAME))) {
-                data.hasMainMethod = true;
+                FunctionTree functionTree = tree.topLevelTrees().get(
+                        tree.topLevelTrees().indexOf(
+                                tree.topLevelTrees().stream()
+                                        .filter(f -> f.name().name().asString().equals(MAIN_METHOD_NAME))
+                                        .findFirst()
+                                        .orElseThrow(() -> new ParseException("No main method found"))
+                        )
+                );
+                if (functionTree.returnType().type().equals(BasicType.INT)) {
+                    data.hasMainMethod = true;
+                }else {
+                    throw new ParseException("Main method must return int, but found: " + functionTree.returnType().type());}
             }
             else
                 throw new ParseException("No main method found");

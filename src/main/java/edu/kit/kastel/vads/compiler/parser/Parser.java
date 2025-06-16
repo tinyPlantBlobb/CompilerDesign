@@ -17,7 +17,7 @@ import java.util.Map;
 public class Parser {
     private final TokenSource tokenSource;
     private final List<KeywordType> types  = List.of(KeywordType.INT, KeywordType.BOOL);
-    private static Map<Name, TypeTree> typeMap = new HashMap<>();
+    private static final Map<Name, TypeTree> typeMap = new HashMap<>();
     public Parser(TokenSource tokenSource) {
         this.tokenSource = tokenSource;
     }

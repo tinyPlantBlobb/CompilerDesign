@@ -1,7 +1,5 @@
 package edu.kit.kastel.vads.compiler.parser;
 
-import edu.kit.kastel.vads.compiler.lexer.Keyword;
-import edu.kit.kastel.vads.compiler.lexer.KeywordType;
 import edu.kit.kastel.vads.compiler.parser.ast.*;
 
 import java.util.List;
