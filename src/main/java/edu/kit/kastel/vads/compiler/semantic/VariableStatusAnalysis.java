@@ -2,12 +2,13 @@ package edu.kit.kastel.vads.compiler.semantic;
 
 import edu.kit.kastel.vads.compiler.lexer.Operator;
 import edu.kit.kastel.vads.compiler.parser.ast.*;
+
 import edu.kit.kastel.vads.compiler.parser.visitor.NoOpVisitor;
 import edu.kit.kastel.vads.compiler.parser.visitor.Unit;
 import org.jspecify.annotations.Nullable;
 
-import java.lang.foreign.MemorySegment;
 import java.util.Locale;
+
 
 /// Checks that variables are
 /// - declared before assignment
@@ -48,10 +49,22 @@ class VariableStatusAnalysis implements NoOpVisitor<Namespace<VariableStatusAnal
     }
 
     private static void checkUndeclared(NameTree name, @Nullable VariableStatus status) {
+        System.out.println("Checking undeclared for: " + name + ", status: " + status);
         if (status != null) {
             throw new SemanticException("Variable " + name + " is already declared");
         }
     }
+//
+//    private static VariableStatus defineAllUninitialized(Namespace<VariableStatus> data) {
+//        // Initialize all variables as DECLARED
+//        for (Name name : data.content.keySet()) {
+//            if (data.get(name) == null) {
+//                data.put(NameTree(name), VariableStatus.DECLARED, (existing, replacement) -> existing);
+//            }
+//            data.put(NameTree.of(name), VariableStatus.DECLARED, (existing, replacement) -> existing);
+//        }
+//        return VariableStatus.DECLARED;
+//    }
 
     @Override
     public Unit visit(DeclarationTree declarationTree, Namespace<VariableStatus> data) {
@@ -78,9 +91,17 @@ class VariableStatusAnalysis implements NoOpVisitor<Namespace<VariableStatusAnal
         checkInitialized(identExpressionTree.name(), status);
         return NoOpVisitor.super.visit(identExpressionTree, data);
     }
+    @Override
+    public Unit visit(LValueIdentTree lValueIdentTree, Namespace<VariableStatus> data) {
+
+        VariableStatus status = data.get(lValueIdentTree.name());
+        checkDeclared(lValueIdentTree.name(), status);
+        return NoOpVisitor.super.visit(lValueIdentTree, data);
+    }
 
     @Override
     public Unit visit(IfTree ifTree, Namespace<VariableStatus> data) {
+
         ifTree.condition().accept(this, data);
 
         if (ifTree.elseTree() != null) {
@@ -94,29 +115,68 @@ class VariableStatusAnalysis implements NoOpVisitor<Namespace<VariableStatusAnal
         return NoOpVisitor.super.visit(ifTree, data);
 
     }
+    @Override
+    public Unit visit(ReturnTree returnTree, Namespace<VariableStatus> data) {
+
+        if (returnTree.expression() != null) {
+            returnTree.expression().accept(this, data);
+        }
+        return NoOpVisitor.super.visit(returnTree, data);
+    }
 
     @Override
     public Unit visit(WhileTree whileTree, Namespace<VariableStatus> data) {
-        //Namespace<VariableStatus> stat = whileTree.condition().accept(this, data);
-        // The loop body can share the same variable status
-        //whileTree.loopBody().accept(this, stat);
+
+        whileTree.condition().accept(this, data);
+        Namespace<VariableStatus> loopData = enterNamespace(data);
+        whileTree.loopBody().accept(this, loopData);
         return NoOpVisitor.super.visit(whileTree, data);
     }
 
     @Override
     public Unit visit(ForTree forTree, Namespace<VariableStatus> data) {
 
+        forTree.condition().accept(this, data);
+        Namespace<VariableStatus> loopData = enterNamespace(data);
+        if (forTree.initialisation() != null) {
+            forTree.initialisation().accept(this, loopData);
+        }
+        if (forTree.step() != null) {
+            forTree.step().accept(this, loopData);
+        }
+        forTree.loopBody().accept(this, loopData);
         return NoOpVisitor.super.visit(forTree, data);
     }
 
     @Override
     public Unit visit(BreakTree breakTree, Namespace<VariableStatus> data) {
+
         return NoOpVisitor.super.visit(breakTree, data);
     }
 
     @Override
     public Unit visit(ContinueTree continueTree, Namespace<VariableStatus> data) {
         return NoOpVisitor.super.visit(continueTree, data);
+    }
+
+    @Override
+    public Unit visit(TernaryOperationTree ternaryOperationTree, Namespace<VariableStatus> data) {
+
+        ternaryOperationTree.condition().accept(this, data);
+        ternaryOperationTree.thenExpression().accept(this, data);
+        ternaryOperationTree.elseExpression().accept(this, data);
+        return NoOpVisitor.super.visit(ternaryOperationTree, data);
+    }
+
+    @Override
+    public Unit visit(TypeTree typeTree, Namespace<VariableStatus> data) {
+        // TypeTree does not have any variable status, so we just return
+        return NoOpVisitor.super.visit(typeTree, data);
+    }
+
+    private Namespace<VariableStatus> enterNamespace(Namespace<VariableStatus> data) {
+        // Create a new namespace for the block
+        return new Namespace<>(data.content);
     }
 
     enum VariableStatus {
