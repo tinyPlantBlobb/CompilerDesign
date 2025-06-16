@@ -239,28 +239,138 @@ public class SsaTranslation {
     public Optional<Node> visit(IfTree ifTree, SsaTranslation data) {
         pushSpan(ifTree);
         Node condition = ifTree.condition().accept(this, data).orElseThrow();
-        // TODO: handle  branches
+        IfProjections ifProjection = ProjectIfNode(data, condition);
+        data.constructor.sealBlock(data.constructor.currentBlock());
+
+        Node projNode = processBranch(ifTree.thenTree(), ifProjection.trueProj, "if_then", data);
+        Node elseProj = processBranch(ifTree.elseTree(), ifProjection.falseProj, "if_else", data);
+        Block endBlock = data.constructor.newBlock("if_end");
+        data.constructor.setCurrentBlock(endBlock);
+        endBlock.addPredecessor(projNode);
+        endBlock.addPredecessor(elseProj);
+        data.constructor.sealBlock(endBlock);
+        popSpan();
         return NOT_AN_EXPRESSION;
+    }
+    private Node processBranch(StatementTree branch, ProjNode projNode, String label, SsaTranslation data) {
+      Block branchBlock = data.constructor.newBlock(label);
+        branchBlock.addPredecessor(projNode);
+        data.constructor.sealBlock(branchBlock);
+        if (branch != null) {
+            // if there is no else branch, we just return the projNode
+          branch.accept(this, data);
+
+        }
+
+        data.constructor.sealBlock(data.constructor.currentBlock());
+        return data.constructor.newJump(data.currentBlock());
     }
 
     @Override
     public Optional<Node> visit(WhileTree whileTree, SsaTranslation data) {
-      return Optional.empty();
+        pushSpan(whileTree);
+      data.constructor.sealBlock(data.constructor.currentBlock());
+      Node exitJump = data.constructor.newJump(data.constructor.currentBlock());
+
+      Block whileBlock = data.constructor.newBlock("while");
+      whileBlock.addPredecessor(exitJump);
+        data.constructor.setCurrentBlock(whileBlock);
+        data.constructor.pushLoopBlock(whileBlock);
+        var condition = whileTree.condition().accept(this, data).orElseThrow();
+
+        IfProjections ifProjection = ProjectIfNode(data, condition);
+
+        Block followBlock = data.constructor.newBlock("while_follow");
+        followBlock.addPredecessor(ifProjection.falseProj);
+        data.constructor.pushLoopFollow(followBlock);
+
+        Block bodyBlock = data.constructor.newBlock("while_body");
+        bodyBlock.addPredecessor(ifProjection.trueProj);
+        data.constructor.sealBlock(bodyBlock);
+        data.constructor.setCurrentBlock(bodyBlock);
+        whileTree.loopBody().accept(this, data).orElseThrow();
+        Node conditionJump = data.constructor.newJump(data.constructor.currentBlock());
+        data.constructor.sealBlock(data.constructor.currentBlock());
+        whileBlock.addPredecessor(conditionJump);
+
+        data.constructor.popLoopBlock(whileBlock);
+        data.constructor.sealBlock(whileBlock);
+        data.constructor.popLoopFollow(followBlock);
+        data.constructor.sealBlock(followBlock);
+        data.constructor.setCurrentBlock(followBlock);
+        popSpan();
+      return NOT_AN_EXPRESSION;
     }
 
     @Override
     public Optional<Node> visit(ForTree forTree, SsaTranslation data) {
-      return Optional.empty();
+    pushSpan(forTree);
+    // For loops are desugared to a while loop, so we can just use the whileTree visitor
+    //Node init = forTree.initializer().accept(this, data).orElseThrow();
+    forTree.initialisation().accept(this, data).orElseThrow();
+    data.constructor.sealBlock(data.constructor.currentBlock());
+    Node entryJump = data.constructor.newJump(data.constructor.currentBlock());
+
+    Block forBlock = data.constructor.newBlock("for");
+      forBlock.addPredecessor(entryJump);
+      Block followBlock = data.constructor.newBlock("for_follow");
+      Block bodyBlock = data.constructor.newBlock("for_body");
+      Block stepBlock = data.constructor.newBlock("for_step");
+
+      data.constructor.pushLoopBlock(stepBlock);
+      data.constructor.popLoopFollow(followBlock);
+        data.constructor.setCurrentBlock(forBlock);
+
+      var condition = forTree.condition().accept(this, data).orElseThrow();
+      IfProjections ifProjection = ProjectIfNode(data, condition);
+      bodyBlock.addPredecessor(ifProjection.trueProj);
+      followBlock.addPredecessor(ifProjection.falseProj);
+      data.constructor.setCurrentBlock(stepBlock);
+
+      if (forTree.step() != null) {
+        forTree.step().accept(this, data).orElseThrow();
+      }
+      Node stepExitJump = data.constructor.newJump(data.constructor.currentBlock());
+      forBlock.addPredecessor(stepExitJump);
+
+      data.constructor.setCurrentBlock(bodyBlock);
+      forTree.loopBody().accept(this, data).orElseThrow();
+      Node normalLoopExit = data.constructor.newJump(data.constructor.currentBlock());
+      stepExitJump.addPredecessor(normalLoopExit);
+      data.constructor.sealBlock(forBlock);
+      data.constructor.sealBlock(followBlock);
+      data.constructor.sealBlock(stepBlock);
+      data.constructor.sealBlock(bodyBlock);
+
+      data.constructor.popLoopFollow(followBlock);
+      data.constructor.popLoopBlock(stepBlock);
+      data.constructor.setCurrentBlock(followBlock);
+
+    popSpan();
+      return NOT_AN_EXPRESSION;
     }
 
     @Override
     public Optional<Node> visit(BreakTree breakTree, SsaTranslation data) {
-      return Optional.empty();
+        pushSpan(breakTree);
+        Node jump = data.constructor.newJump(data.constructor.currentBlock());
+      data.constructor.getLoopFollow().addPredecessor(jump);
+      data.constructor.sealBlock(data.constructor.currentBlock());
+      data.constructor.setCurrentBlock(data.constructor.newBlock("following_break"));
+      popSpan();
+      return NOT_AN_EXPRESSION;
     }
 
     @Override
-    public Optional<Node> visit(ContinueTree continueTree, SsaTranslation data) {
-      return Optional.empty();
+    public Optional<Node> visit(ContinueTree continueTree, SsaTranslation data){
+      pushSpan(continueTree);
+    Node jump = data.constructor.newJump(data.constructor.currentBlock());
+        data.constructor.getLoopBlock().addPredecessor(jump);
+        data.constructor.sealBlock(data.constructor.currentBlock());
+        data.constructor.setCurrentBlock(data.constructor.newBlock("following_continue"));
+    popSpan();
+        return NOT_AN_EXPRESSION;
+
     }
 
 

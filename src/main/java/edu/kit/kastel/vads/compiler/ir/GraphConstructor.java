@@ -4,10 +4,7 @@ import edu.kit.kastel.vads.compiler.ir.node.*;
 import edu.kit.kastel.vads.compiler.ir.optimize.Optimizer;
 import edu.kit.kastel.vads.compiler.parser.symbol.Name;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 class GraphConstructor {
 
@@ -19,6 +16,8 @@ class GraphConstructor {
     private final Map<Block, Phi> incompleteSideEffectPhis = new HashMap<>();
     private final Set<Block> sealedBlocks = new HashSet<>();
     private Block currentBlock;
+    private List<Block> loopBlockStack = new ArrayList<>();
+    private List<Block> loopFollowStack = new ArrayList<>();
 
     public GraphConstructor(Optimizer optimizer, String name) {
         this.optimizer = optimizer;
@@ -267,5 +266,38 @@ public Node newRightShift(Node left, Node right) {
         assert block != null : "block must not be null";
         assert !this.sealedBlocks.contains(block) : "cannot set current block to a sealed block";
         this.currentBlock = block;
+    }
+
+    public void pushLoopBlock(Block block) {
+        this.loopBlockStack.add(block);
+    }
+
+    public void pushLoopFollow(Block block) {
+        this.loopFollowStack.add(block);
+    }
+
+    public void popLoopBlock(Block block) {
+        Block followBlock = this.loopFollowStack.removeLast();
+        assert followBlock == block: "follow block must be the same as the popped block";
+
+    }
+
+    public void popLoopFollow(Block followBlock) {
+        Block block = this.loopBlockStack.removeLast();
+        assert block == followBlock : "block must be the same as the popped block";
+    }
+
+    public Node getLoopFollow() {
+        if (this.loopFollowStack.isEmpty()) {
+            return new NoDefNode(this.graph.startBlock());
+        }
+        return this.loopFollowStack.getLast();
+    }
+
+    public Node getLoopBlock() {
+        if (this.loopBlockStack.isEmpty()) {
+            return new NoDefNode(this.graph.startBlock());
+        }
+        return this.loopBlockStack.getLast();
     }
 }
