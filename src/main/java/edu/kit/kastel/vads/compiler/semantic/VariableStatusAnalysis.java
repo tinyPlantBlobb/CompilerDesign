@@ -6,6 +6,7 @@ import edu.kit.kastel.vads.compiler.parser.visitor.NoOpVisitor;
 import edu.kit.kastel.vads.compiler.parser.visitor.Unit;
 import org.jspecify.annotations.Nullable;
 
+import java.lang.foreign.MemorySegment;
 import java.util.Locale;
 
 /// Checks that variables are
@@ -58,7 +59,6 @@ class VariableStatusAnalysis implements NoOpVisitor<Namespace<VariableStatusAnal
         VariableStatus status = declarationTree.initializer() == null
             ? VariableStatus.DECLARED
             : VariableStatus.INITIALIZED;
-
         updateStatus(data, status, declarationTree.name());
         return NoOpVisitor.super.visit(declarationTree, data);
     }
@@ -81,27 +81,42 @@ class VariableStatusAnalysis implements NoOpVisitor<Namespace<VariableStatusAnal
 
     @Override
     public Unit visit(IfTree ifTree, Namespace<VariableStatus> data) {
-        return null;
+        ifTree.condition().accept(this, data);
+
+        if (ifTree.elseTree() != null) {
+            // If-else branches can share the same variable status
+            ifTree.thenTree().accept(this, data);
+            ifTree.elseTree().accept(this, data);
+        } else {
+            // Only the then branch is executed
+            ifTree.thenTree().accept(this, data);
+        }
+        return NoOpVisitor.super.visit(ifTree, data);
+
     }
 
     @Override
     public Unit visit(WhileTree whileTree, Namespace<VariableStatus> data) {
-        return null;
+        //Namespace<VariableStatus> stat = whileTree.condition().accept(this, data);
+        // The loop body can share the same variable status
+        //whileTree.loopBody().accept(this, stat);
+        return NoOpVisitor.super.visit(whileTree, data);
     }
 
     @Override
     public Unit visit(ForTree forTree, Namespace<VariableStatus> data) {
-        return null;
+
+        return NoOpVisitor.super.visit(forTree, data);
     }
 
     @Override
     public Unit visit(BreakTree breakTree, Namespace<VariableStatus> data) {
-        return null;
+        return NoOpVisitor.super.visit(breakTree, data);
     }
 
     @Override
     public Unit visit(ContinueTree continueTree, Namespace<VariableStatus> data) {
-        return null;
+        return NoOpVisitor.super.visit(continueTree, data);
     }
 
     enum VariableStatus {
