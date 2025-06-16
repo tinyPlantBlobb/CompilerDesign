@@ -3,8 +3,9 @@ package edu.kit.kastel.vads.compiler.parser.ast;
 import edu.kit.kastel.vads.compiler.Position;
 import edu.kit.kastel.vads.compiler.Span;
 import edu.kit.kastel.vads.compiler.parser.visitor.Visitor;
+import org.jspecify.annotations.NullMarked;
 
-public record IfTree(ExpressionTree condition, StatementTree thenTree, StatementTree elseTree, Position spanStart) implements ControlFlowTree {
+public record  IfTree(ExpressionTree condition, StatementTree thenTree, @NullMarked StatementTree elseTree, Position spanStart) implements ControlFlowTree {
 
 
 
