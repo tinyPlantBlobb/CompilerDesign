@@ -18,25 +18,17 @@ public class x86CodeGenerator {
         StringBuilder builder = new StringBuilder();
         builder.append(prologue());
 
-            //FileWriter file = new FileWriter("graphs/test1.vcg", false);
+        FileWriter file = new FileWriter("graphs/test1.vcg", false);
 
         for (IrGraph graph : program) {
             x86RegisterAllocator allocator = new x86RegisterAllocator(graph);
             Map<Node, Register> registers = allocator.allocateRegisters(graph);
 
-//            try {
-//                FileWriter registerfile = new FileWriter("register.txt", true);
-//                file.write(YCompPrinter.print(graph));
-//
-//                registerfile.write(graph.name()+":\n");
-//                registerfile.write( registers.keySet().stream()
-//                        .map(key -> key + "=" + registers.get(key)+"\n")
-//                        .collect(Collectors.joining(", ", "{", "}")));
-//                file.close();
-//                registerfile.close();
-//            } catch (IOException e) {
-//                throw new RuntimeException(e);
-//            }
+            try {
+                file.write(YCompPrinter.print(graph));
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
 
             if (graph.name().equals("main")) {
                 builder.append(generatePrologue("_main"));
@@ -80,7 +72,7 @@ public class x86CodeGenerator {
     private void generateForGraph(IrGraph graph, StringBuilder builder, Map<Node, Register> registers) {
         Node current = graph.startBlock();
         for (Node node : graph.getControlFlowOrder()) {
-            System.out.println(node + " " + node.hashCode());
+            System.out.println(node + " " + node.hashCode() + " " + current.hashCode() + " " + node.block());
             switch (node) {
                 case AddNode add -> binary(builder, registers, add, "add");
                 case SubNode sub -> subtract(builder, registers, sub, "sub");
@@ -187,12 +179,20 @@ public class x86CodeGenerator {
                         .append("jmp ").append(targetName).append("\n");
                 }
                 case IfNode ifNode -> {
-                    String thenBlock = String.valueOf(ifNode.block().hashCode());
+                    String elseBlock = graph.successors(ifNode).stream()
+                            .map(b -> String.valueOf(b.hashCode()))
+                            .collect(Collectors.joining(", ")).split(", ")[1];
+                    String thenBlock = graph.successors(ifNode).stream()
+                            .map(b -> String.valueOf(b.hashCode()))
+                            .collect(Collectors.joining(", ")).split(", ")[0];
+                    //String thenBlock = String.valueOf(ifNode.block().hashCode());
+                    //elseBlock = String.valueOf(ifNode.elseBlock().hashCode());
                     Register condition = registers.get(ifNode);
                     builder.append("  ")
-                        .append("cmp ").append(condition).append(", 1\n")
-                        .append("  ")
-                        .append("je ").append(thenBlock).append("\n");
+                            .append("cmp ").append(condition).append(", 1\n")
+                            .append("  ")
+                            .append("je ").append(thenBlock).append("\n")
+                            .append("jmp").append(elseBlock).append("\n");
                 }
                 case BitwiseNotNode bitwiseNotNode -> {
                     Register target = registers.get(bitwiseNotNode);
@@ -237,7 +237,11 @@ public class x86CodeGenerator {
                         .append("mov ").append(target).append(", ").append(firstPredecessorRegister).append("\n");
                     //throw new UnsupportedOperationException("phi");
                 }
-                case Block _, ProjNode _, StartNode _ -> {
+                case Block b -> {
+                    System.out.println("append block: " + b.hashCode());
+                    builder.append("block").append(b.hashCode()).append(":\n");
+                }
+                case ProjNode _, StartNode _ -> {
                     // do nothing, skip line break
                 }
                 default -> builder.append("errror : not implemented node type: ")

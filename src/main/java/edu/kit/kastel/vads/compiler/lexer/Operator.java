@@ -103,9 +103,9 @@ public record Operator(OperatorType type, Span span) implements Token {
 
         public Type outputType() {
             return switch (this) {
-                case LOGICAL_EQUAL, LOGICAL_NOT_EQUAL, LOGICAL_AND, LOGICAL_OR, LOGICAL_NOT -> BasicType.BOOL;
+                case LOGICAL_EQUAL, LOGICAL_NOT_EQUAL, LOGICAL_AND, LOGICAL_OR, LOGICAL_NOT, GREATER_EQUAL, GREATER_THAN, LESS_EQUAL, LESS_THAN -> BasicType.BOOL;
                 case MINUS, PLUS, MUL, DIV, MOD, LEFT_SHIFT, RIGHT_SHIFT, BITWISE_AND, BITWISE_NOT,
-                     BITWISE_OR, BITWISE_XOR, GREATER_EQUAL, GREATER_THAN, LESS_EQUAL, LESS_THAN -> BasicType.INT;
+                     BITWISE_OR, BITWISE_XOR -> BasicType.INT;
                 case ASSIGN_MINUS, ASSIGN_PLUS, ASSIGN_MUL, ASSIGN_DIV, ASSIGN_MOD, ASSIGN_LEFT_SHIFT,
                      ASSIGN_RIGHT_SHIFT, ASSIGN_BITWISE_AND, ASSIGN_BITWISE_OR, ASSIGN_BITWISE_XOR, ASSIGN,
                      TERNARY_COLON, TERNARY_CONDITION ->
