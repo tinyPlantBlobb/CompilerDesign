@@ -394,9 +394,10 @@ public class SsaTranslation {
       pushSpan(ternaryOperationTree);
       Node condition = ternaryOperationTree.condition().accept(this, data).orElseThrow();
       IfProjections ifProjection = ProjectIfNode(data, condition);
+      data.constructor.sealBlock(data.constructor.currentBlock());
       Block trueBlock = data.constructor.newBlock("terniary_then");
-      trueBlock.addPredecessor(ifProjection.trueProj);
       Block falseBlock = data.constructor.newBlock("terniary_else");
+      trueBlock.addPredecessor(ifProjection.trueProj);
       falseBlock.addPredecessor(ifProjection.falseProj);
       data.constructor.sealBlock(trueBlock);
       data.constructor.sealBlock(falseBlock);
