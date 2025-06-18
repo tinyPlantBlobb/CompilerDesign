@@ -174,11 +174,13 @@ public class x86CodeGenerator {
                         .append("setle ").append(target).append("\n");
                 }
                 case JumpNode jump -> {
+                    System.out.println("append jump: " + jump.targetBlock.hashCode());
                     String targetName = String.valueOf(jump.targetBlock.hashCode());
                     builder.append("  ")
                         .append("jmp ").append(targetName).append("\n");
                 }
                 case IfNode ifNode -> {
+                    System.out.println("append if: " + ifNode.hashCode());
                     String elseBlock = graph.successors(ifNode).stream()
                             .map(b -> String.valueOf(b.hashCode()))
                             .collect(Collectors.joining(", ")).split(", ")[1];
