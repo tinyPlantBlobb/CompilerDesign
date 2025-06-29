@@ -9,7 +9,7 @@ import static edu.kit.kastel.vads.compiler.ir.util.NodeSupport.predecessorSkipPr
 public class ConstantFolding implements Optimizer {
     @Override
     public Node transform(Node node) {
-        System.out.println(node.getClass().getSimpleName() + " in constant folding");
+        //System.out.println(node.getClass().getSimpleName() + " in constant folding");
         if (node instanceof BinaryOperationNode binaryOperationNode) {
             Node left = predecessorSkipProj(binaryOperationNode, BinaryOperationNode.LEFT);
             Node right = predecessorSkipProj(binaryOperationNode,BinaryOperationNode.RIGHT);

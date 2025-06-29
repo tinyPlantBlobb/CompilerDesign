@@ -18,17 +18,17 @@ public class x86CodeGenerator {
         StringBuilder builder = new StringBuilder();
         builder.append(prologue());
 
-        FileWriter file = new FileWriter("graphs/test1.vcg", false);
+        //FileWriter file = new FileWriter("graphs/test1.vcg", false);
 
         for (IrGraph graph : program) {
             x86RegisterAllocator allocator = new x86RegisterAllocator(graph);
             Map<Node, Register> registers = allocator.allocateRegisters(graph);
-
-            try {
-                file.write(YCompPrinter.print(graph));
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+//
+//            try {
+//                file.write(YCompPrinter.print(graph));
+//            } catch (IOException e) {
+//                throw new RuntimeException(e);
+//            }
 
             if (graph.name().equals("main")) {
                 builder.append(generatePrologue("_main"));
