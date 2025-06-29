@@ -190,13 +190,21 @@ public Node newRightShift(Node left, Node right) {
     }
 
     void sealBlock(Block block) {
+        if (this.sealedBlocks.contains(block)) {
+            return; // already sealed
+        }
         for (Map.Entry<Name, Phi> entry : this.incompletePhis.getOrDefault(block, Map.of()).entrySet()) {
-            addPhiOperands(entry.getKey(), entry.getValue());
+
+            Node replacement = addPhiOperands(entry.getKey(), entry.getValue());
+            if (this.currentDef.get(entry.getKey()).get(block) == entry.getValue()) {
+                this.currentDef.get(entry.getKey()).put(block, replacement) ;
+            }
         }
         Phi sideEffectPhi = this.incompleteSideEffectPhis.get(block);
         if (sideEffectPhi != null) {
             addPhiOperands(sideEffectPhi);
         }
+        this.incompletePhis.remove(block);
         this.sealedBlocks.add(block);
     }
 
@@ -239,17 +247,20 @@ public Node newRightShift(Node left, Node right) {
 
     Node addPhiOperands(Phi phi) {
         for (Node pred : phi.block().predecessors()) {
-            phi.appendOperand(readSideEffect(pred.block()));
+            if(!(readSideEffect(pred.block()) instanceof NoDefNode)){
+                phi.appendOperand(readSideEffect(pred.block()));
+            }
         }
         return tryRemoveTrivialPhi(phi);
     }
 
 
-    public Node newLogicalNot(Node operand) {
-        return this.optimizer.transform(new LogicalNotNode(currentBlock(), operand));
+    public Node newLogicalNot(Node value) {
+        return newXor(value, newConstInt(1));
     }
 
     public Node newIf(Node condition) {
+        System.out.println("Creating new IfNode in block " + currentBlock());
         return this.optimizer.transform(new IfNode(currentBlock(), condition));
     }
     public ProjNode newIfTrueProj(Node node) {

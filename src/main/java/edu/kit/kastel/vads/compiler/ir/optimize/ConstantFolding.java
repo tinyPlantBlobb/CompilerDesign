@@ -9,6 +9,7 @@ import static edu.kit.kastel.vads.compiler.ir.util.NodeSupport.predecessorSkipPr
 public class ConstantFolding implements Optimizer {
     @Override
     public Node transform(Node node) {
+        System.out.println(node.getClass().getSimpleName() + " in constant folding");
         if (node instanceof BinaryOperationNode binaryOperationNode) {
             Node left = predecessorSkipProj(binaryOperationNode, BinaryOperationNode.LEFT);
             Node right = predecessorSkipProj(binaryOperationNode,BinaryOperationNode.RIGHT);
@@ -39,34 +40,34 @@ public class ConstantFolding implements Optimizer {
                             result = leftValue % rightValue;
                         }
                     }
-                    case EqualNode _ -> {
-                        if (leftValue == rightValue) {
-                            return new ConstBoolNode(node.block(), true);
-                        } else {
-                            return new ConstBoolNode(node.block(), false);
-                        }
-                    }
-                    case NotEqualNode _ -> {
-                        if (leftValue != rightValue) {
-                            return new ConstBoolNode(node.block(), true);
-                        } else {
-                            return new ConstBoolNode(node.block(), false);
-                        }
-                    }
-                    case LessThanNode _ -> {
-                        if (leftValue < rightValue) {
-                            return new ConstBoolNode(node.block(), true);
-                        } else {
-                            return new ConstBoolNode(node.block(), false);
-                        }
-                    }
-                    case LessThanOrEqualNode _ -> {
-                        if (leftValue <= rightValue) {
-                            return new ConstBoolNode(node.block(), true);
-                        } else {
-                            return new ConstBoolNode(node.block(), false);
-                        }
-                    }
+//                    case EqualNode _ -> {
+//                        if (leftValue == rightValue) {
+//                            return new ConstBoolNode(node.block(), true);
+//                        } else {
+//                            return new ConstBoolNode(node.block(), false);
+//                        }
+//                    }
+//                    case NotEqualNode _ -> {
+//                        if (leftValue != rightValue) {
+//                            return new ConstBoolNode(node.block(), true);
+//                        } else {
+//                            return new ConstBoolNode(node.block(), false);
+//                        }
+//                    }
+//                    case LessThanNode _ -> {
+//                        if (leftValue < rightValue) {
+//                            return new ConstBoolNode(node.block(), true);
+//                        } else {
+//                            return new ConstBoolNode(node.block(), false);
+//                        }
+//                    }
+//                    case LessThanOrEqualNode _ -> {
+//                        if (leftValue <= rightValue) {
+//                            return new ConstBoolNode(node.block(), true);
+//                        } else {
+//                            return new ConstBoolNode(node.block(), false);
+//                        }
+//                    }
                     default -> {
                         return node;
                     }

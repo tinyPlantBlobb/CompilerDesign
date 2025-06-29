@@ -43,6 +43,7 @@ public class IrGraph {
     }
 
     private void traverseControlFlow(Node node, Set<Node> visited, List<Node> controlFlowOrder) {
+        System.out.println("Traversing control flow for " + node);
         for (Node predecessors : node.predecessors()) {
             if (!visited.contains(predecessors)) {
 

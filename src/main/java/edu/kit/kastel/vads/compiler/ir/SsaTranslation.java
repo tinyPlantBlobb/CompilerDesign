@@ -288,7 +288,7 @@ public class SsaTranslation {
         bodyBlock.addPredecessor(ifProjection.trueProj);
         data.constructor.sealBlock(bodyBlock);
         data.constructor.setCurrentBlock(bodyBlock);
-        whileTree.loopBody().accept(this, data).orElseThrow();
+        whileTree.loopBody().accept(this, data);
         Node conditionJump = data.constructor.newJump(data.constructor.currentBlock());
         data.constructor.sealBlock(data.constructor.currentBlock());
         whileBlock.addPredecessor(conditionJump);
@@ -377,11 +377,11 @@ public class SsaTranslation {
     @Override
     public Optional<Node> visit(UnaryOperationTree unaryOperationTree, SsaTranslation data) {
       pushSpan(unaryOperationTree);
-      Node operand = unaryOperationTree.expression().accept(this, data).orElseThrow();
+      Node value = unaryOperationTree.expression().accept(this, data).orElseThrow();
       Node res = switch (unaryOperationTree.operand().type()) {
-        case MINUS -> data.constructor.newSub(data.constructor.newConstInt(0), operand);
-        case BITWISE_NOT -> data.constructor.newBitwiseNot(operand);
-        case LOGICAL_NOT -> data.constructor.newLogicalNot(operand);
+        case MINUS -> data.constructor.newSub(data.constructor.newConstInt(0), value);
+        case BITWISE_NOT -> data.constructor.newBitwiseNot(value);
+        case LOGICAL_NOT -> data.constructor.newLogicalNot(value);
         default ->
           throw new IllegalArgumentException("not a unary expression operator " + unaryOperationTree.operand().type());
       };

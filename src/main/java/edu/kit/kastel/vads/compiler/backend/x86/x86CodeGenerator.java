@@ -18,17 +18,17 @@ public class x86CodeGenerator {
         StringBuilder builder = new StringBuilder();
         builder.append(prologue());
 
-        //FileWriter file = new FileWriter("graphs/test1.vcg", false);
+        FileWriter file = new FileWriter("graphs/test1.vcg", false);
 
         for (IrGraph graph : program) {
             x86RegisterAllocator allocator = new x86RegisterAllocator(graph);
             Map<Node, Register> registers = allocator.allocateRegisters(graph);
-//
-//            try {
-//                file.write(YCompPrinter.print(graph));
-//            } catch (IOException e) {
-//                throw new RuntimeException(e);
-//            }
+
+            try {
+                file.write(YCompPrinter.print(graph));
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
 
             if (graph.name().equals("main")) {
                 builder.append(generatePrologue("_main"));
@@ -46,6 +46,7 @@ public class x86CodeGenerator {
         FileWriter writer = new FileWriter("output.s");
         writer.write(builder.toString());
         writer.close();
+        System.out.println(builder.toString());
         return builder.toString();
     }
     public void generateEpilogue(String name, StringBuilder builder){
@@ -72,7 +73,7 @@ public class x86CodeGenerator {
     private void generateForGraph(IrGraph graph, StringBuilder builder, Map<Node, Register> registers) {
         Node current = graph.startBlock();
         for (Node node : graph.getControlFlowOrder()) {
-            //System.out.println(node + " " + node.hashCode() + " " + current.hashCode() + " " + node.block() + " " + node.predecessors());
+            System.out.println(node.getClass() + " " + node.hashCode() + node.block() + " " + node.predecessors());
             switch (node) {
                 case AddNode add -> binary(builder, registers, add, "add");
                 case SubNode sub -> subtract(builder, registers, sub, "sub");
@@ -238,7 +239,6 @@ public class x86CodeGenerator {
                     Register firstPredecessorRegister = registers.get(predecessor);
                     builder.append("  ")
                         .append("mov ").append(target).append(", ").append(firstPredecessorRegister).append("\n");
-                    //throw new UnsupportedOperationException("phi");
                 }
                 case Block b -> {
                     current = node;
